@@ -1,2 +1,5 @@
+from src.repository import create_repository
+
+
 def init(path):
-    print(path)
+    create_repository(path)
