@@ -1,4 +1,5 @@
 import optparse
+from src.repository import repo_find
 
 from src import porcelain
 
@@ -28,8 +29,9 @@ class CmdAdd(Command):
 
 class CmdLog(Command):
     def run(self, args):
-        ...
-
+        repo = repo_find()     
+        print(repo.worktree)
+        print(repo.gitdir)
 
 class CmdCommit(Command):
     def run(self, args):
