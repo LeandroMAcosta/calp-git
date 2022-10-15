@@ -1,5 +1,5 @@
 import optparse
-from src.repository import repo_find
+from src.repository import find_repository
 
 from src import porcelain
 
@@ -29,13 +29,27 @@ class CmdAdd(Command):
 
 class CmdLog(Command):
     def run(self, args):
-        repo = repo_find()     
+        repo = find_repository()     
         print(repo.worktree)
         print(repo.gitdir)
+        # TODO: Implement
+
 
 class CmdCommit(Command):
     def run(self, args):
         ...
+
+
+class CmdLsTree(Command):
+    def run(self, args):
+        parser = optparse.OptionParser()
+        parser.add_option(
+            '--tree-ish',
+            dest="tree_ish",
+            help="Tree-ish of the tree."
+        )
+        options, args = parser.parse_args(args)
+        porcelain.ls_tree(options.tree_ish)
 
 
 commands = {
@@ -43,4 +57,5 @@ commands = {
     'add': CmdAdd,
     'log': CmdLog,
     'commit': CmdCommit,
+    'ls-tree': CmdLsTree,
 }

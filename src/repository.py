@@ -43,7 +43,7 @@ def create_repository(path) -> Repository:
     return repo
 
 
-def repo_find(path=".") -> Repository:
+def find_repository(path=".") -> Repository:
     path = os.path.realpath(path)
 
     if os.path.isdir(os.path.join(path, GITDIR)):
@@ -51,11 +51,11 @@ def repo_find(path=".") -> Repository:
 
     parent = os.path.realpath(os.path.join(path, ".."))
 
+    # Base case
     if parent == path:
-        # Bottom case
         # os.path.join("/", "..") == "/":
         # If parent == path, then path is root.
         raise Exception("No git directory.")
 
     # Recursive case
-    return repo_find(parent)
+    return find_repository(parent)
