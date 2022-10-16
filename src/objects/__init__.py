@@ -9,8 +9,11 @@ OBJECT_CLASSES = [Blob, Commit, Tree]
 OBJECT_CHOICES = {cls.object_type: cls for cls in OBJECT_CLASSES}
 
 
-def object_class(name):
-    return OBJECT_CHOICES[name]
+def object_class(object_type):
+    try:
+        return OBJECT_CHOICES[object_type]
+    except KeyError:
+        raise TypeError(f"Unknown type {object_type}")
 
 
 def read_object(repo, sha):
@@ -28,11 +31,7 @@ def read_object(repo, sha):
         if size != len(raw) - header_end - 1:
             raise Exception(f"Invalid object {sha}: bad length")
 
-        try:
-            obj_class = object_class(type_name)
-        except KeyError:
-            raise TypeError(f"Unknown type {type_name}")
-
+        obj_class = object_class(type_name)
         return obj_class(repo, raw[header_end + 1 :])
 
 
@@ -44,10 +43,7 @@ def find_object(repo, ref, object_type=None) -> str:
 
 def object_hash(file, type_name, repo=None):
     data = file.read()
-    try:
-        obj_class = object_class(type_name)
-    except KeyError:
-        raise TypeError(f"Unknown type {type_name}")
+    obj_class = object_class(type_name)
 
     obj = obj_class(repo, data)
     content = obj.serialize()
