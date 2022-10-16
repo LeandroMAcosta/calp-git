@@ -30,9 +30,10 @@ class CmdAdd(Command):
 
 class CmdLog(Command):
     def run(self, args):
-        repo = repo_find()     
+        repo = repo_find()
         print(repo.worktree)
         print(repo.gitdir)
+
 
 class CmdCommit(Command):
     def run(self, args):
@@ -52,7 +53,7 @@ class CmdHashObject(Command):
         parser.add_option(
             "-w",
             dest="write",
-            default=False,
+            action="store_true",
             help="Actually write the object into the object database."
         )
         parser.add_option(
