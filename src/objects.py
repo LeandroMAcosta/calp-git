@@ -70,7 +70,7 @@ def read_object(repo, sha):
     """
     """
     path = repo.build_path('objects', sha[0:2], sha[2:])
-    with open (path, 'rb') as file:
+    with open(path, 'rb') as file:
         raw = zlib.decompress(file.read())
         # Read object type
         type_end = raw.find(b' ')
@@ -158,6 +158,7 @@ OBJECT_CLASSES = [Blob, Commit, Tree]
 OBJECT_CHOICES = {}
 for cls in OBJECT_CLASSES:
     OBJECT_CHOICES[cls.name] = cls
+
 
 def object_class(name):
     return OBJECT_CHOICES[name]
