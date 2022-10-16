@@ -1,11 +1,10 @@
-import zlib
-from hashlib import sha1
-
-from src.objects import object_class
-from src.repository import Repository
+from src.objects import find_object, object_hash, read_object
+from src.repository import Repository, repo_find
 
 
 def hash_object(type, path, write):
+    """
+    """
     repo = None
     if write:
         repo = Repository('.')
@@ -15,22 +14,9 @@ def hash_object(type, path, write):
         print(sha)
 
 
-def object_hash(file, type_name, repo=None):
-    data = file.read()
-    try:
-        obj_class = object_class(type_name)
-    except KeyError:
-        raise TypeError(f'Unknown type {type_name}')
-
-    obj = obj_class(repo, data)
-    content = obj.serialize()
-    length = len(obj.data)
-    header = obj.name + b' ' + str(length).encode('ascii') + b'\0'
-    sha = sha1(header + content).hexdigest()
-
-    # if the repository is passed, we save it in the database
-    if repo is not None:
-        path = repo.create_dir('objects', sha[0:2])
-        with open(f'{path}/{sha[2:]}', 'wb') as file:
-            file.write(zlib.compress(header + content))
-    return sha
+def cat_file(type, object):
+    """
+    """
+    repo = repo_find()
+    obj = read_object(repo, find_object(repo, object, type_name=type))
+    print(obj.serialize())

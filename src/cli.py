@@ -1,8 +1,8 @@
+import argparse
 import optparse
-from src.repository import repo_find
 
-from src import porcelain
-from src import plumbing
+from src import plumbing, porcelain
+from src.repository import repo_find
 
 
 class Command:
@@ -65,10 +65,27 @@ class CmdHashObject(Command):
         plumbing.hash_object(options.type, options.path, options.write)
 
 
+class CmdCatFile(Command):
+    def run(self, args):
+        parser = argparse.ArgumentParser()
+        parser.add_argument(
+            "type",
+            choices=["blob", "commit", "tag", "tree"],
+            help="Specify the type"
+        )
+        parser.add_argument(
+            "object",
+            help="The object to display"
+        )
+        args = parser.parse_args(args)
+        plumbing.cat_file(args.type, args.object)
+
+
 commands = {
     'init': CmdInit,
     'add': CmdAdd,
     'log': CmdLog,
     'commit': CmdCommit,
     'hash-object': CmdHashObject,
+    'cat-file': CmdCatFile,
 }
