@@ -1,6 +1,6 @@
 from typing import List
 
-from objects import ShaFile
+from .sha_object import ShaObject
 
 
 class TreeLeaf:
@@ -12,8 +12,8 @@ class TreeLeaf:
         self.length = length
 
 
-class Tree(ShaFile):
-    fmt = b"tree"
+class Tree(ShaObject):
+    object_type = b"tree"
 
     def deserialize(self, data):
         self.items = self.parse_tree(data)
@@ -57,5 +57,4 @@ def parse_to_leaf(raw: bytes) -> TreeLeaf:
     assert len(sha) == 20
     parsed_sha1 = hex(int.from_bytes(sha, "big"))[2:]
 
-    print(f"mode: {mode}, path: {path}, sha: {parsed_sha1}")
     return TreeLeaf(mode, path, parsed_sha1, y + 21)

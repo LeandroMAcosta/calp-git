@@ -1,8 +1,9 @@
 import argparse
 import optparse
 
-from src import plumbing, porcelain
 from src.repository import find_repository
+
+from . import plumbing, porcelain
 
 
 class Command:
@@ -43,7 +44,9 @@ class CmdLsTree(Command):
         parser = optparse.OptionParser()
         parser.add_option("--tree-ish", dest="tree_ish", help="Tree-ish of the tree.")
         options, args = parser.parse_args(args)
-        porcelain.ls_tree(options.tree_ish)
+        if options.tree_ish is None:
+            parser.error("tree-ish is required")
+        plumbing.ls_tree(options.tree_ish)
 
 
 class CmdHashObject(Command):
