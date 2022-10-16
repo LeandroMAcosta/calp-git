@@ -3,7 +3,7 @@ from typing import List
 from objects import ShaFile
 
 
-class TreeLeaf(object):
+class TreeLeaf:
     # Format: [mode] space [path] 0x00 [sha-1]
     def __init__(self, mode, path, sha, length):
         self.mode = mode

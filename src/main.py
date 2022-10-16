@@ -14,4 +14,4 @@ def main(argv=sys.argv[1:]):
     except KeyError:
         print(f"No such subcommand: {cmd}")
         return
-    return cmd_cls().run(argv)
+    return cmd_cls().run(argv[1:])
