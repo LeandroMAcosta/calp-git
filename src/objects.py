@@ -45,7 +45,7 @@ class Commit(ShaFile):
                 value = [value]
 
             for v in value:
-                raw += key + b' ' + (v.replace(b'\n', b'\n ')) + b'\n'
+                raw += key + b' ' + v + b'\n'
 
         raw += b'\n' + self.commit_data[b'']
         return raw
