@@ -30,7 +30,7 @@ def object_hash(file, type_name, repo=None):
 
     # if the repository is passed, we save it in the database
     if repo is not None:
-        path = repo.create_dir('objects', sha[0:2], sha[2:])
-        with open(path, 'wb') as file:
+        path = repo.create_dir('objects', sha[0:2])
+        with open(f'{path}/{sha[2:]}', 'wb') as file:
             file.write(zlib.compress(header + content))
     return sha
