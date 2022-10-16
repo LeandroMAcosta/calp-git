@@ -4,7 +4,7 @@ import os
 GITDIR = ".calp"
 
 class Repository:
-    
+
     worktree = "."
     gitdir = GITDIR
     conf = None
