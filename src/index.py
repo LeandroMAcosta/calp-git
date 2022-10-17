@@ -1,4 +1,3 @@
-from operator import index
 import os
 
 from src.plumbing import hash_object
