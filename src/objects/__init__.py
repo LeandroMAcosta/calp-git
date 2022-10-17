@@ -1,5 +1,4 @@
 import zlib
-from hashlib import sha1
 
 from .blob import Blob
 from .commit import Commit
