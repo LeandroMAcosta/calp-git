@@ -39,21 +39,3 @@ def find_object(repo, ref, object_type=None) -> str:
     """ """
     # At the moment we only search with the complete hash
     return ref
-
-
-def object_hash(file, type_name, repo=None):
-    data = file.read()
-    obj_class = object_class(type_name)
-
-    obj = obj_class(repo, data)
-    content = obj.serialize()
-    length = len(obj.data)
-    header = obj.object_type + b" " + str(length).encode("ascii") + b"\0"
-    sha = sha1(header + content).hexdigest()
-
-    # if the repository is passed, we save it in the database
-    if repo is not None:
-        path = repo.create_dir("objects", sha[0:2])
-        with open(f"{path}/{sha[2:]}", "wb") as file:
-            file.write(zlib.compress(header + content))
-    return sha

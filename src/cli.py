@@ -23,7 +23,10 @@ class CmdInit(Command):
 
 class CmdAdd(Command):
     def run(self, args):
-        ...
+        parser = argparse.ArgumentParser()
+        parser.add_argument('paths', nargs='+')
+        args = parser.parse_args(args)
+        porcelain.add(args.paths)
 
 
 class CmdLog(Command):

@@ -1,4 +1,7 @@
-from src.objects import find_object, object_hash, read_object
+import zlib
+from hashlib import sha1
+
+from src.objects import find_object, object_class, read_object
 from src.objects.tree import Tree
 from src.repository import Repository, find_repository
 
@@ -6,12 +9,24 @@ from src.repository import Repository, find_repository
 def hash_object(type, path, write):
     """ """
     repo = None
-    if write:
-        repo = Repository(".")
-
+    object_type = type.encode("ascii")
     with open(path, "rb") as file:
-        sha = object_hash(file, type.encode("ascii"), repo)
-        print(sha)
+        data = file.read()
+        obj_class = object_class(object_type)
+        obj = obj_class(repo, data)
+
+        length = len(obj.data)
+        header = obj.object_type + b" " + str(length).encode("ascii") + b"\0"
+        full_data = header + obj.serialize()
+        sha = sha1(full_data).hexdigest()
+
+        if write:
+            repo = Repository(".")
+            path = repo.create_dir("objects", sha[0:2])
+            with open(f"{path}/{sha[2:]}", "wb") as file:
+                file.write(zlib.compress(full_data))
+    print(sha)
+    return sha
 
 
 def cat_file(object_type, object):
@@ -20,9 +35,6 @@ def cat_file(object_type, object):
     obj = read_object(repo, find_object(repo, object, object_type=object_type))
     # for key, value in obj.de():
     #     print(f"{key}: {value}")
-    import ipdb
-
-    ipdb.set_trace()
     res: bytes = obj.serialize()
     print(res.decode("ascii"))
 
