@@ -21,7 +21,7 @@ def hash_object(type, path, write):
         sha = sha1(full_data).hexdigest()
 
         if write:
-            repo = Repository(".")
+            repo = find_repository()
             path = repo.create_dir("objects", sha[0:2])
             with open(f"{path}/{sha[2:]}", "wb") as file:
                 file.write(zlib.compress(full_data))

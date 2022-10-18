@@ -1,4 +1,4 @@
-class ShaObject:
+class BaseObject:
 
     repo = None
     data = None

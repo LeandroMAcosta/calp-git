@@ -1,5 +1,8 @@
-from src.index import Entry, read_entries, write_entries
-from src.repository import create_repository
+from typing import List
+
+from src.index import IndexEntry, read_entries, write_entries
+from src.plumbing import hash_object
+from src.repository import GITDIR, create_repository
 
 
 def init(path):
@@ -7,10 +10,18 @@ def init(path):
 
 
 def add(paths):
-    entries = read_entries()
+    # Read the entries from the staging area in the index file
+    entries: List[IndexEntry] = read_entries()
+    entries = [entry for entry in entries if entry.path not in paths]
 
     for path in paths:
-        entry = Entry(path)
+        if path.startswith(GITDIR) or path in [".", ".."]:
+            raise Exception(f"Cannot add {path} to the index")
+
+    for path in paths:
+        # TODO: Handle directories
+        hash = hash_object("blob", path, write=True)
+        entry = IndexEntry(path, hash)
         entries.append(entry)
 
     write_entries(entries)

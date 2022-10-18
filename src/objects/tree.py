@@ -1,6 +1,6 @@
 from typing import List
 
-from .sha_object import ShaObject
+from .base import BaseObject
 
 
 class TreeLeaf:
@@ -12,7 +12,7 @@ class TreeLeaf:
         self.length = length
 
 
-class Tree(ShaObject):
+class Tree(BaseObject):
     object_type = b"tree"
 
     def deserialize(self, data):

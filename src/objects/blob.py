@@ -1,7 +1,7 @@
-from src.objects.sha_object import ShaObject
+from .base import BaseObject
 
 
-class Blob(ShaObject):
+class Blob(BaseObject):
     object_type = b"blob"
 
     def serialize(self):

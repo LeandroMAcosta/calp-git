@@ -1,30 +1,45 @@
 import os
+from typing import List
 
-from src.plumbing import hash_object
-from src.repository import Repository
+from src.repository import find_repository
 
 
-class Entry:
-    def __init__(self, path):
+class IndexEntry:
+    # {hash} {path}\n
+    def __init__(self, path, hash):
         self.path = path
-        self.hash = hash_object("blob", path, write=True)
+        self.hash = hash
 
 
-def read_entries():
+def read_entries() -> List[IndexEntry]:
     entries = []
-    index_path = Repository(".").build_path("index")
+    repository = find_repository()
+    index_path = repository.build_path("index")
 
+    assert index_path.startswith(repository.gitdir)
     if not os.path.exists(index_path):
         return entries
 
-    # TODO: read the index file
+    with open(index_path, "rb") as file:
+        # Instantiate IndexEntry objects
+        data: str = file.read().decode("ascii")
+        for line in data.splitlines():
+            hash, path = line.split(" ")
+            entries.append(IndexEntry(path, hash))
+
     return entries
 
 
-def write_entries(entries):
-    data = b''
-    # TODO: build the data
+def write_entries(entries: List[IndexEntry]):
+    # TODO: Sort entires by path
 
-    index_path = Repository(".").build_path("index")
+    entries = sorted(entries, key=lambda entry: entry.path)
+
+    data = b""
+    for entry in entries:
+        data += f"{entry.hash} {entry.path}\n".encode("ascii")
+
+    repository = find_repository()
+    index_path = repository.build_path("index")
     with open(index_path, "wb") as file:
         file.write(data)
