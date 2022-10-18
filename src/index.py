@@ -10,6 +10,16 @@ class IndexEntry:
         self.path = path
         self.hash = hash
 
+    def deserialize(self, data: bytes):
+        ...
+
+    # TODO: Implement
+
+    def serialize(self) -> bytes:
+        ...
+
+    # TODO: Implement
+
 
 def read_entries() -> List[IndexEntry]:
     entries = []
@@ -24,6 +34,7 @@ def read_entries() -> List[IndexEntry]:
         # Instantiate IndexEntry objects
         data: str = file.read().decode("ascii")
         for line in data.splitlines():
+            # TODO: Use deserialize method's in IndexEntry
             hash, path = line.split(" ")
             entries.append(IndexEntry(path, hash))
 
@@ -31,12 +42,11 @@ def read_entries() -> List[IndexEntry]:
 
 
 def write_entries(entries: List[IndexEntry]):
-    # TODO: Sort entires by path
-
     entries = sorted(entries, key=lambda entry: entry.path)
 
     data = b""
     for entry in entries:
+        # TODO: Use serialize method's in IndexEntry
         data += f"{entry.hash} {entry.path}\n".encode("ascii")
 
     repository = find_repository()
