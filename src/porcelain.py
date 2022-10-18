@@ -21,7 +21,8 @@ def add(paths):
     for path in paths:
         # TODO: Handle directories
         hash = hash_object("blob", path, write=True)
-        entry = IndexEntry(path, hash)
-        entries.append(entry)
+        if hash:
+            entry = IndexEntry(path, hash)
+            entries.append(entry)
 
     write_entries(entries)

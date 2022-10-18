@@ -1,3 +1,4 @@
+import os
 import zlib
 from hashlib import sha1
 
@@ -47,6 +48,9 @@ def hash_object(type, path, write):
     """ """
     repo = None
     object_type = type.encode("ascii")
+    if not os.path.exists(path):
+        return None
+
     with open(path, "rb") as file:
         data = file.read()
         obj_class = object_class(object_type)
@@ -62,7 +66,6 @@ def hash_object(type, path, write):
             path = repo.create_dir("objects", sha[0:2])
             with open(f"{path}/{sha[2:]}", "wb") as file:
                 file.write(zlib.compress(full_data))
-    print(sha)
     return sha
 
 
