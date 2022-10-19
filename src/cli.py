@@ -24,7 +24,7 @@ class CmdInit(Command):
 class CmdAdd(Command):
     def run(self, args):
         parser = argparse.ArgumentParser()
-        parser.add_argument('paths', nargs='+')
+        parser.add_argument("paths", nargs="+")
         args = parser.parse_args(args)
         porcelain.add(args.paths)
 
@@ -74,7 +74,8 @@ class CmdHashObject(Command):
             help="Hash object as it were located at the given path.",
         )
         options, args = parser.parse_args(args)
-        plumbing.hash_object(options.type, options.path, options.write)
+        sha = plumbing.hash_object(options.type, options.path, options.write)
+        print(sha)
 
 
 class CmdCatFile(Command):
