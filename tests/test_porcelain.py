@@ -9,12 +9,16 @@ ABSOLUTE_PATH = f"{TEST_PATHS}/tmp"
 GITDIR = ".calp"
 
 
-def clean_tmp():
-    os.system(f"rm -rf {ABSOLUTE_PATH}/*")
-    os.system(f"rm -rf {ABSOLUTE_PATH}/{GITDIR}")
+print("Running tests...")
+if not os.path.exists(ABSOLUTE_PATH):
+    os.mkdir(f"{ABSOLUTE_PATH}/")
 
 
 class TestGitCommands(unittest.TestCase):
+    def tearDown(self):
+        os.system(f"rm -rf {ABSOLUTE_PATH}/*")
+        os.system(f"rm -rf {ABSOLUTE_PATH}/{GITDIR}")
+
     def test_init(self):
 
         # assert that tmp_path not exists
@@ -33,7 +37,6 @@ class TestGitCommands(unittest.TestCase):
         self.assertTrue(os.path.exists(f"{ABSOLUTE_PATH}/{GITDIR}/HEAD"))
         self.assertTrue(os.path.exists(f"{ABSOLUTE_PATH}/{GITDIR}/objects"))
         self.assertTrue(os.path.exists(f"{ABSOLUTE_PATH}/{GITDIR}/refs"))
-        clean_tmp()
 
     def test_add(self):
         # assert that tmp_path not exists
@@ -53,7 +56,6 @@ class TestGitCommands(unittest.TestCase):
             f"{ABSOLUTE_PATH}/{GITDIR}/objects/{expected_hash[:2]}/{expected_hash[2:]}"
         )
         self.assertTrue(os.path.exists(expected_path))
-        clean_tmp()
 
     def test_add_deleted_file(self):
         # assert that tmp_path not exists
@@ -89,14 +91,3 @@ class TestGitCommands(unittest.TestCase):
         self.assertEqual(entries[0].hash, "a5bce3fd2565d8f458555a0c6f42d0504a848bd5")
         self.assertEqual(entries[1].path, "test2.txt")
         self.assertEqual(entries[1].hash, "180cf8328022becee9aaa2577a8f84ea2b9f3827")
-
-        clean_tmp()
-
-
-print("Running tests...")
-if not os.path.exists(ABSOLUTE_PATH):
-    os.mkdir(f"{ABSOLUTE_PATH}/")
-
-# After all tests are done, remove tmp directory
-unittest.main(exit=False)
-clean_tmp()

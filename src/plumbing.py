@@ -48,8 +48,6 @@ def hash_object(type, path, write):
     """ """
     repo = None
     object_type = type.encode("ascii")
-    if not os.path.exists(path):
-        return None
 
     with open(path, "rb") as file:
         data = file.read()
