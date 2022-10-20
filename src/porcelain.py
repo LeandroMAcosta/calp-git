@@ -19,8 +19,8 @@ def add(paths):
         if path.startswith(GITDIR) or path in [".", ".."]:
             raise Exception(f"Cannot add {path} to the index")
 
-        if os.path.exists(path):
-            raise FileExistsError(f"File does not exist: {path}")
+        if not os.path.exists(path):
+            raise FileNotFoundError(f"File does not exist: {path}")
 
     for path in paths:
         # TODO: Handle directories
