@@ -1,6 +1,9 @@
+import os
 import zlib
 from hashlib import sha1
+from typing import List
 
+from src.index import IndexEntry
 from src.repository import find_repository
 
 from .objects.blob import Blob
@@ -16,6 +19,26 @@ def object_class(object_type):
         return OBJECT_CHOICES[object_type]
     except KeyError:
         raise TypeError(f"Unknown type {object_type}")
+
+
+def parse_index_to_dict(entires: List[IndexEntry]) -> dict:
+    """
+    Build a dict of directories and files from the entries in the index file.
+    """
+    dict = {}
+    for entry in entires:
+        path = entry.path
+        if "/" not in path:
+            dict[path] = entry.hash
+        else:
+            dirs = path.split("/")
+            parent = dict
+            for dir in dirs[:-1]:
+                if dir not in parent:
+                    parent[dir] = {}
+                parent = parent[dir]
+            parent[dirs[-1]] = entry.hash
+    return dict
 
 
 def read_object(repo, sha):
@@ -47,6 +70,7 @@ def hash_object(type, path, write):
     """ """
     repo = None
     object_type = type.encode("ascii")
+
     with open(path, "rb") as file:
         data = file.read()
         obj_class = object_class(object_type)
@@ -62,7 +86,6 @@ def hash_object(type, path, write):
             path = repo.create_dir("objects", sha[0:2])
             with open(f"{path}/{sha[2:]}", "wb") as file:
                 file.write(zlib.compress(full_data))
-    print(sha)
     return sha
 
 
