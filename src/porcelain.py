@@ -19,11 +19,13 @@ def add(paths):
         if path.startswith(GITDIR) or path in [".", ".."]:
             raise Exception(f"Cannot add {path} to the index")
 
+        if os.path.exists(path):
+            raise FileExistsError(f"File does not exist: {path}")
+
     for path in paths:
         # TODO: Handle directories
-        if os.path.exists(path):
-            hash = hash_object("blob", path, write=True)
-            entry = IndexEntry(path, hash)
-            entries.append(entry)
+        hash = hash_object("blob", path, write=True)
+        entry = IndexEntry(path, hash)
+        entries.append(entry)
 
     write_entries(entries)
