@@ -79,6 +79,9 @@ class TestGitCommands(unittest.TestCase):
         )
         self.assertTrue(os.path.exists(expected_path))
 
+        entries = read_entries()
+        self.assertEqual(len(entries), 3)
+
         # delete file
         os.system("rm test.txt")
         self.assertFalse(os.path.exists("test.txt"))
