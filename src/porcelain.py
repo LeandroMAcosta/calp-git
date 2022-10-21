@@ -1,9 +1,10 @@
 import os
+import glob
 from typing import List
 
 from src.index import IndexEntry, read_entries, write_entries
 from src.plumbing import hash_object
-from src.repository import GITDIR, create_repository
+from src.repository import GITDIR, create_repository, find_repository
 
 
 def init(path):
@@ -27,3 +28,49 @@ def add(paths):
             entries.append(entry)
 
     write_entries(entries)
+
+def status():
+    # Read the entries from the staging area in the index file
+    entries: List[IndexEntry] = read_entries()
+    repo = find_repository()
+    files = []
+    modified = []
+    untracked = []
+    deleted = []
+    hashes = []
+
+    def rec(directory):
+        for path in os.scandir(directory):
+            if not path.name.startswith(GITDIR):
+                if path.is_file():
+                    files.append(os.path.join(directory, path))
+                else:
+                    rec(os.path.join(directory, path))
+
+    rec(repo.worktree)
+
+    for file in files:
+        hash = hash_object("blob", file, write=False)
+        hashes.append(hash)
+        found = False
+
+        for entry in entries:
+            print(file, entry.path, hash, entry.hash)
+            if entry.hash != hash and entry.path in file:
+                modified.append(entry.path)
+                found = True
+                break
+            elif entry.hash == hash and entry.path in file:
+                found = True
+        
+        if not found:
+            relative_path = os.path.relpath(file, repo.worktree)
+            untracked.append(relative_path)
+
+    for entry in entries:
+        print(entry.hash, entry.path)
+
+    print(modified, untracked, deleted)
+
+
+    

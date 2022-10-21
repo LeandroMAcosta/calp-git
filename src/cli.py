@@ -20,6 +20,10 @@ class CmdInit(Command):
         options, args = parser.parse_args(args)
         porcelain.init(options.path)
 
+class CmdStatus(Command):
+    def run(self, args):
+        porcelain.status()
+
 
 class CmdAdd(Command):
     def run(self, args):
@@ -91,6 +95,7 @@ class CmdCatFile(Command):
 
 commands = {
     "init": CmdInit,
+    "status": CmdStatus,
     "add": CmdAdd,
     "log": CmdLog,
     "commit": CmdCommit,
