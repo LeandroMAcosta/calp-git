@@ -1,4 +1,4 @@
-from typing import List
+from typing import Dict, List
 
 from .base import BaseObject
 
@@ -13,6 +13,19 @@ class TreeLeaf:
 
 
 class Tree(BaseObject):
+    """
+    Format of a tree object:
+    tree {size}\0
+    {mode} {path_1}\0{sha-1}
+    {mode} {path_2}\0{sha-1}
+    ...
+    {mode} {path_n}\0{sha-1}
+
+    links:
+    https://git-scm.com/book/en/v2/Git-Internals-Git-Objects
+    https://stackoverflow.com/questions/14790681/what-is-the-internal-format-of-a-git-tree-object
+    """
+
     object_type = b"tree"
 
     def deserialize(self, data):
@@ -58,3 +71,8 @@ def parse_to_leaf(raw: bytes) -> TreeLeaf:
     parsed_sha1 = hex(int.from_bytes(sha, "big"))[2:]
 
     return TreeLeaf(mode, path, parsed_sha1, y + 21)
+
+
+# recursive tree parsing
+def create_tree_file(entries: dict) -> Tree:
+    ...

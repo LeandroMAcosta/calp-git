@@ -19,6 +19,8 @@ class Repository:
             self.conf.read([cf])
 
     def build_path(self, *path):
+        # [ "A", "V", "C" ]
+        # .gitdir/A/B/C
         return os.path.join(self.gitdir, *path)
 
     def create_dir(self, *path):

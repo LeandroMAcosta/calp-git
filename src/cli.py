@@ -39,7 +39,11 @@ class CmdLog(Command):
 
 class CmdCommit(Command):
     def run(self, args):
-        ...
+        # required -m message
+        parser = argparse.ArgumentParser()
+        parser.add_argument("-m", "--message", required=True)
+        args = parser.parse_args(args)
+        porcelain.commit(args.message)
 
 
 class CmdLsTree(Command):

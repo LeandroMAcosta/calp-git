@@ -27,3 +27,16 @@ def add(paths):
             entries.append(entry)
 
     write_entries(entries)
+
+
+def commit(message):
+    # Read the entries from the staging area in the index file
+    # entries: List[IndexEntry] = read_entries()
+    # parsed_entries = parse_index_to_dict(entries)
+
+    # TODO:
+    # tree = hash_object("tree", entries, write=True)
+    # parent = None
+    # commit = hash_object("commit", (tree, parent, message), write=True)
+    # print(f"[{commit}] {message}")
+    ...
