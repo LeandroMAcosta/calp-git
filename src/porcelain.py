@@ -4,7 +4,7 @@ from typing import List
 from src.index import IndexEntry, read_entries, write_entries
 from src.plumbing import hash_object
 from src.repository import GITDIR, create_repository, find_repository
-from src.utils import get_files_rec
+from src.utils import get_files_rec, print_status_messages
 
 def init(path):
     create_repository(path)
@@ -60,33 +60,7 @@ def status():
         if not entry.hash in hashes and entry.path not in modified:
             deleted.append(entry.path)
 
-    FAIL = '\033[91m' # red color
-    ENDC = '\033[0m'
-
-    if len(modified):
-        print()
-        print("Changes not staged for commit:")
-        print(f"  (use '{GITDIR[1:]} add <file>...' to update what will be committed)")
-        print(f"  (use '{GITDIR[1:]} restore <file>...' to discard changes in working directory)")
-        for file in modified:
-            print(f"\t{FAIL}modified: {file}{ENDC}")
-        print()
-    
-    if len(deleted):
-        print()
-        print("Deleted files:")
-        for file in deleted:
-            print(f"\t{FAIL}{file}{ENDC}")
-        print()
-        
-    
-    if len(untracked):
-        print()
-        print("Untracked files:")
-        print("  (use '{GITDIR[1:]} add <file>...' to include in what will be committed)")
-        for file in untracked:
-            print(f"\t{FAIL}{file}{ENDC}")
-        print()
+    print_status_messages(modified, untracked, deleted)
 
 
 

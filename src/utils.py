@@ -11,3 +11,27 @@ def get_files_rec(directory):
                 get_files_rec(os.path.join(directory, path))
 
     return files
+
+def print_status_messages(modified, untracked, deleted):
+    FAIL = '\033[91m' # red color
+    ENDC = '\033[0m'
+
+    if len(modified):
+        print("\nChanges not staged for commit:\n" +
+          f"  (use '{GITDIR[1:]} add <file>...' to update what will be committed)\n" +
+          f"  (use '{GITDIR[1:]} restore <file>...' to discard changes in working directory)"
+        )
+        for file in modified:
+            print(f"\t{FAIL}modified: {file}{ENDC}")
+    
+    if len(deleted):
+        print("\nDeleted files:")
+        for file in deleted:
+            print(f"\t{FAIL}{file}{ENDC}")
+    
+    if len(untracked):
+        print("\nUntracked files:\n" +
+          f"  (use '{GITDIR[1:]} add <file>...' to include in what will be committed)"
+        )
+        for file in untracked:
+            print(f"\t{FAIL}{file}{ENDC}")
