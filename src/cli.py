@@ -2,6 +2,7 @@ import argparse
 import optparse
 
 from src.repository import find_repository
+from src.utils import print_status_messages
 
 from . import plumbing, porcelain
 
@@ -19,6 +20,12 @@ class CmdInit(Command):
         )
         options, args = parser.parse_args(args)
         porcelain.init(options.path)
+
+
+class CmdStatus(Command):
+    def run(self, args):
+        STATUS = porcelain.status()
+        print_status_messages(STATUS)
 
 
 class CmdAdd(Command):
@@ -95,6 +102,7 @@ class CmdCatFile(Command):
 
 commands = {
     "init": CmdInit,
+    "status": CmdStatus,
     "add": CmdAdd,
     "log": CmdLog,
     "commit": CmdCommit,
