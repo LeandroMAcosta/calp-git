@@ -1,10 +1,10 @@
 import os
 import zlib
+from datetime import date
 from hashlib import sha1
-from typing import List
 
-from src.index import IndexEntry, parse_index_entries_to_dict, read_entries
-from src.repository import Repository, find_repository
+from src.index import parse_index_entries_to_dict, read_entries
+from src.repository import find_repository
 
 from .objects.blob import Blob
 from .objects.commit import Commit
@@ -106,6 +106,35 @@ def write_tree() -> str:
     return sha
 
 
+def write_commit(tree_sha, message, parents=[]):
+    data = b"tree " + tree_sha.encode("ascii") + b"\n"
+    for parent in parents:
+        data += b"parent " + parent.encode("ascii") + b"\n"
+
+    # seconds since 1970
+    date_seconds = str(int(date.today().strftime("%s"))).encode("ascii")
+    date_timezone = b"+0000"
+    data += (
+        b"author pepito <pepito@calp.com> "
+        + date_seconds
+        + b" "
+        + date_timezone
+        + b"\n"
+    )
+    data += (
+        b"committer pepito <pepito@calp.com> "
+        + date_seconds
+        + b" "
+        + date_timezone
+        + b"\n"
+    )
+    data += b"\n" + message.encode("ascii")
+
+    commit_sha1 = hash_object("commit", data=data, write=True)
+    print(commit_sha1)
+    return commit_sha1
+
+
 def hash_tree_recurisve(entries: dict) -> str:
     """
     {
@@ -144,6 +173,10 @@ def get_commit_sha1(ref):
         HEAD: {commit-sha-1} o 'ref: refs/heads/main'
     """
     repo = find_repository()
+    path = repo.build_path(ref)
+    if not os.path.exists(path):
+        return None
+
     with open(repo.build_path(ref), "r") as file:
         data = file.read().strip()
 
@@ -151,3 +184,17 @@ def get_commit_sha1(ref):
         return get_commit_sha1(data[5:])
     else:
         return data
+
+
+def update_current_ref(sha):
+    repo = find_repository()
+    with open(repo.build_path("HEAD"), "r") as file:
+        head_data = file.read().strip()
+
+    if head_data.startswith("ref: "):
+        ref = head_data[5:]
+        with open(repo.build_path(ref), "w") as file:
+            file.write(sha)
+    else:
+        with open(repo.build_path("HEAD"), "w") as file:
+            file.write(sha)

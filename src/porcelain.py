@@ -1,9 +1,9 @@
 import os
-from hashlib import shake_256
 from typing import List
 
 from src.index import IndexEntry, read_entries, write_entries
-from src.plumbing import hash_object, write_tree
+from src.plumbing import (get_commit_sha1, hash_object, read_object,
+                          update_current_ref, write_commit, write_tree)
 from src.repository import GITDIR, create_repository, find_repository
 from src.utils import get_files_rec, print_status_messages
 
@@ -33,17 +33,27 @@ def add(paths):
 
 
 def commit(message):
-    sha = write_tree()
-    print(sha)
-    # Read the entries from the staging area in the index file
-    # entries: List[IndexEntry] = read_entries()
-    # parsed_entries = parse_index_to_dict(entries)
+    tree_sha1 = write_tree()
 
-    # TODO:
-    # tree = hash_object("tree", entries, write=True)
-    # parent = None
-    # commit = hash_object("commit", (tree, parent, message), write=True)
-    # print(f"[{commit}] {message}"
+    parent = get_commit_sha1("HEAD")
+    repo = find_repository()
+
+    current_commit = read_object(repo, parent)
+    data = current_commit.commit_data
+    if data[b"tree"] == tree_sha1.encode("ascii"):
+        print("Nothing to commit")
+        return
+    if parent:
+        commit_sha1 = write_commit(tree_sha1, message, [parent])
+    else:
+        commit_sha1 = write_commit(tree_sha1, message)
+
+    # HEAD apunta a un commit (sha1)
+    # - Actualizar HEAD al commit nuevo
+    # HEAD apunta a una branch (ref: refs/heads/master)
+    # - Actualizar refs/heads/master al commit nuevo
+    update_current_ref(commit_sha1)
+    return commit_sha1
 
 
 def status():
