@@ -32,11 +32,12 @@ class CmdCheckout(Command):
         parser = optparse.OptionParser()
         parser.add_option(
             "-b",
-            dest="branch",
+            dest="new_branch",
+            action="store_true",
             help="Name of the branch.",
         )
         options, args = parser.parse_args(args)
-        porcelain.checkout(options.branch)
+        porcelain.checkout(options.new_branch, args)
 
 class CmdAdd(Command):
     def run(self, args):

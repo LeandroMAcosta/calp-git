@@ -95,7 +95,36 @@ def status():
     }
 
 
-def checkout(branch):
-    if not branch:
-        raise Exception("use '-b' followed by the branch name")
-    print(branch)
+def checkout(new_branch, args):
+    repo = find_repository()
+    branch_path = repo.worktree + "/" + GITDIR + "/refs/heads/" + args[0]
+
+    # Move to an existing branch if it exists
+    if not new_branch:
+        if os.path.exists(branch_path):
+            STATUS = status()
+            # If there are changes, they need to be commited before
+            # changing to a branch
+            if STATUS["deleted"] or STATUS["modified"] or STATUS["untracked"]:
+                print_status_messages(STATUS)
+                return
+            else:
+                with open(repo.build_path("HEAD"), "w+") as file:
+                    file.write(f"ref: refs/heads/{args[0]}")
+                return
+        else:
+            raise Exception("Branch does not exist")
+    
+
+    if os.path.exists(branch_path):
+        raise Exception("Branch already exists")
+    
+    with open(branch_path, "w+") as file:
+        # TODO: 
+        file.write("last commit hash from father branch")
+    
+    # Switch to new branch
+    with open(repo.build_path("HEAD"), "w+") as file:
+        file.write(f"ref: refs/heads/{args[0]}")
+
+    print(f"Switched to branch '{args[0]}'")
