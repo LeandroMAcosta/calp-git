@@ -25,7 +25,7 @@ def add(paths):
     for path in paths:
         # TODO: Handle directories
         if os.path.exists(path):
-            hash = hash_object("blob", path, write=True)
+            hash = hash_object("blob", path=path, write=True)
             entry = IndexEntry(path, hash)
             entries.append(entry)
 
@@ -57,7 +57,7 @@ def status():
     hashes = []
 
     for file in files:
-        hash = hash_object("blob", file, write=False)
+        hash = hash_object("blob", path=file, write=False)
         hashes.append(hash)
         found = False
 

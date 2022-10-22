@@ -35,8 +35,8 @@ class Tree(BaseObject):
         ret = b""
         for item in self.items:
             sha = int(item.sha, 16).to_bytes(20, byteorder="big")
-            raw = f"{item.mode} {item.path}\x00{sha}"
-            ret += raw.encode()
+            raw = item.mode + b" " + item.path + b"\x00" + sha
+            ret += raw
         return ret
 
     def parse_tree(self, data) -> List[TreeLeaf]:
@@ -58,7 +58,8 @@ def parse_to_leaf(raw: bytes) -> TreeLeaf:
     start = 0
     # Find the space terminator of the mode
     x = raw.find(b" ", start)
-    assert 5 <= x <= 6
+    assert 5 <= x - start <= 6
+    # TODO: revisra el start
     mode = raw[:x]
 
     # Find the NULL terminator of the path

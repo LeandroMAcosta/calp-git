@@ -95,7 +95,7 @@ class TestGitCommands(unittest.TestCase):
         self.assertEqual(entries[0].hash, "a5bce3fd2565d8f458555a0c6f42d0504a848bd5")
         self.assertEqual(entries[1].path, "test2.txt")
         self.assertEqual(entries[1].hash, "180cf8328022becee9aaa2577a8f84ea2b9f3827")
-        
+
     def test_status_untracked(self):
         # assert that tmp_path not exists
         self.assertTrue(os.path.exists(ABSOLUTE_PATH))
@@ -109,7 +109,7 @@ class TestGitCommands(unittest.TestCase):
         expected_hash = "9daeafb9864cf43055ae93beb0afd6c7d144bfa4"
 
         STATUS = status()
-        self.assertTrue( "test.txt" in STATUS["untracked"])
+        self.assertTrue("test.txt" in STATUS["untracked"])
         self.assertTrue(STATUS["deleted"] == [])
         self.assertTrue(STATUS["modified"] == [])
 
@@ -119,7 +119,7 @@ class TestGitCommands(unittest.TestCase):
             f"{ABSOLUTE_PATH}/{GITDIR}/objects/{expected_hash[:2]}/{expected_hash[2:]}"
         )
         self.assertTrue(os.path.exists(expected_path))
-        
+
         STATUS = status()
         self.assertTrue(STATUS["untracked"] == [])
         self.assertTrue(STATUS["deleted"] == [])
@@ -138,7 +138,7 @@ class TestGitCommands(unittest.TestCase):
         expected_hash = "9daeafb9864cf43055ae93beb0afd6c7d144bfa4"
 
         STATUS = status()
-        self.assertTrue( "test.txt" in STATUS["untracked"])
+        self.assertTrue("test.txt" in STATUS["untracked"])
         self.assertTrue(STATUS["deleted"] == [])
         self.assertTrue(STATUS["modified"] == [])
 
@@ -150,7 +150,7 @@ class TestGitCommands(unittest.TestCase):
         self.assertTrue(os.path.exists(expected_path))
 
         os.system("rm test.txt")
-        
+
         STATUS = status()
         self.assertTrue(STATUS["untracked"] == [])
         self.assertTrue("test.txt" in STATUS["deleted"])
@@ -169,7 +169,7 @@ class TestGitCommands(unittest.TestCase):
         expected_hash = "9daeafb9864cf43055ae93beb0afd6c7d144bfa4"
 
         STATUS = status()
-        self.assertTrue( "test.txt" in STATUS["untracked"])
+        self.assertTrue("test.txt" in STATUS["untracked"])
         self.assertTrue(STATUS["deleted"] == [])
         self.assertTrue(STATUS["modified"] == [])
 
@@ -181,8 +181,38 @@ class TestGitCommands(unittest.TestCase):
         self.assertTrue(os.path.exists(expected_path))
 
         os.system("echo 'test1' > test.txt")
-        
+
         STATUS = status()
         self.assertTrue(STATUS["untracked"] == [])
         self.assertTrue(STATUS["deleted"] == [])
         self.assertTrue("test.txt" in STATUS["modified"])
+
+    def test_commit(self):
+        # assert that tmp_path not exists
+        self.assertTrue(os.path.exists(ABSOLUTE_PATH))
+        os.chdir(ABSOLUTE_PATH)
+
+        # execute bash command ../calp init .
+        os.system("../../calp init")
+
+        # create file
+        os.system("echo 'main' > main.txt")
+        os.system("mkdir A")
+        os.system("echo 'testing' > A/file.txt")
+
+        expected_hash_main = "ba2906d0666cf726c7eaadd2cd3db615dedfdf3a"
+        expected_hash_file = "038d718da6a1ebbc6a7780a96ed75a70cc2ad6e2"
+
+        os.system("../../calp add main.txt A/file.txt")
+        expected_path_main = f"{ABSOLUTE_PATH}/{GITDIR}/objects/{expected_hash_main[:2]}/{expected_hash_main[2:]}"
+        expected_path_file = f"{ABSOLUTE_PATH}/{GITDIR}/objects/{expected_hash_file[:2]}/{expected_hash_file[2:]}"
+        self.assertTrue(os.path.exists(expected_path_main))
+        self.assertTrue(os.path.exists(expected_path_file))
+
+        os.system("../../calp commit -m 'first commit'")
+
+        expected_hash_A_dir = "b06a41c2dded8f7ce5b7341decbf5a89a42c9302"
+        expected_path_A_dir = f"{ABSOLUTE_PATH}/{GITDIR}/objects/{expected_hash_A_dir[:2]}/{expected_hash_A_dir[2:]}"
+        self.assertTrue(os.path.exists(expected_path_A_dir))
+
+        # TODO:

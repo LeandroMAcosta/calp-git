@@ -85,7 +85,14 @@ class CmdHashObject(Command):
             help="Hash object as it were located at the given path.",
         )
         options, args = parser.parse_args(args)
-        sha = plumbing.hash_object(options.type, options.path, options.write)
+        if options.type == "blob":
+            sha = plumbing.hash_object(
+                options.type, path=options.path, write=options.write
+            )
+        else:
+            sha = plumbing.hash_object(
+                options.type, data=options.path, write=options.write
+            )
         print(sha)
 
 

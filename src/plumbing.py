@@ -46,26 +46,32 @@ def find_object(repo, ref, object_type=None) -> str:
     return ref
 
 
-def hash_object(type, path, write) -> str:
-    """ """
+def hash_object(object_type, path=None, data=None, write=True) -> str:
+    if object_type == "blob":
+        with open(path, "rb") as file:  # type: ignore
+            data = file.read()
+            return hash_object_data(object_type, data, write)
+    else:
+        return hash_object_data(object_type, data, write)
+
+
+def hash_object_data(object_type, data, write) -> str:
     repo = None
-    object_type = type.encode("ascii")
+    object_type = object_type.encode("ascii")
 
-    with open(path, "rb") as file:
-        data = file.read()
-        obj_class = object_class(object_type)
-        obj = obj_class(repo, data)
+    obj_class = object_class(object_type)
+    obj = obj_class(repo, data)
 
-        length = len(obj.data)
-        header = obj.object_type + b" " + str(length).encode("ascii") + b"\0"
-        full_data = header + obj.serialize()
-        sha = sha1(full_data).hexdigest()
+    length = len(obj.data)
+    header = obj.object_type + b" " + str(length).encode("ascii") + b"\0"
+    full_data = header + obj.serialize()
+    sha: str = sha1(full_data).hexdigest()
 
-        if write:
-            repo = find_repository()
-            path = repo.create_dir("objects", sha[0:2])
-            with open(f"{path}/{sha[2:]}", "wb") as file:
-                file.write(zlib.compress(full_data))
+    if write:
+        repo = find_repository()
+        path = repo.create_dir("objects", sha[0:2])
+        with open(f"{path}/{sha[2:]}", "wb") as file:
+            file.write(zlib.compress(full_data))
     return sha
 
 
@@ -90,14 +96,17 @@ def ls_tree(tree_ish):
         print(f"{mode} {type} {item.sha}\t{item.path.decode('ascii')}")
 
 
-def write_tree():
+def write_tree() -> str:
+    """
+    Create recursively a tree object from the index
+    """
     entries = read_entries()
     parsed_entries = parse_index_entries_to_dict(entries)
     sha = hash_tree_recurisve(parsed_entries)
     return sha
 
 
-def hash_tree_recurisve(entries: dict):
+def hash_tree_recurisve(entries: dict) -> str:
     """
     {
         "A": {
@@ -118,14 +127,11 @@ def hash_tree_recurisve(entries: dict):
             sha_child = hash_tree_recurisve(item)
             mode = b"40000"
             path = entry.encode("ascii")
-            data += mode + b" " + path + b"\0" + sha_child.encode("ascii")
+            data += mode + b" " + path + b"\x00" + bytes.fromhex(sha_child)
         else:
             # Is a file
-            mode = b"100644"
-            path = entry.encode("ascii")
-            print(f"path: {type(path)}")
-            print(f"item: {type(item)}")
-            data += mode + b" " + path + b"\0" + item.encode("ascii")
-
-    sha = hash_object("tree", data, True)
+            data += (
+                b"100644" + b" " + entry.encode("ascii") + b"\x00" + bytes.fromhex(item)
+            )
+    sha = hash_object("tree", data=data, write=True)
     return sha
