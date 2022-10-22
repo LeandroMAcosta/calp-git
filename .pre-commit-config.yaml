@@ -46,5 +46,5 @@
         # these are errors that will be ignored by flake8
         # check out their meaning here
         # https://flake8.pycqa.org/en/latest/user/error-codes.html
-        - "--ignore=E203,F401"
+        - "--ignore=E203,F401,F841"
         # - "--ignore=E266,E501,W503,F403,F401,E402"

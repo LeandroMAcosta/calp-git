@@ -135,3 +135,19 @@ def hash_tree_recurisve(entries: dict) -> str:
             )
     sha = hash_object("tree", data=data, write=True)
     return sha
+
+
+def get_commit_sha1(ref):
+    """
+    Get the branch name or HEAD, and return the commit sha
+    cases:
+        HEAD: {commit-sha-1} o 'ref: refs/heads/main'
+    """
+    repo = find_repository()
+    with open(repo.build_path(ref), "r") as file:
+        data = file.read().strip()
+
+    if data.startswith("ref: "):
+        return get_commit_sha1(data[5:])
+    else:
+        return data
