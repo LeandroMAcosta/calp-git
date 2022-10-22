@@ -3,7 +3,9 @@ import os
 import unittest
 
 from src.index import read_entries
+from src.plumbing import get_commit_sha1, read_object, write_tree
 from src.porcelain import status
+from src.repository import find_repository
 
 TEST_PATHS = f"{os.getcwd()}/tests"
 ABSOLUTE_PATH = f"{TEST_PATHS}/tmp"
@@ -215,4 +217,8 @@ class TestGitCommands(unittest.TestCase):
         expected_path_A_dir = f"{ABSOLUTE_PATH}/{GITDIR}/objects/{expected_hash_A_dir[:2]}/{expected_hash_A_dir[2:]}"
         self.assertTrue(os.path.exists(expected_path_A_dir))
 
-        # TODO:
+        repo = find_repository()
+        tree_hash = write_tree()
+        commit_sha = get_commit_sha1("HEAD")
+        commit = read_object(repo, commit_sha)
+        self.assertTrue(commit.commit_data[b"tree"] == tree_hash.encode("ascii"))

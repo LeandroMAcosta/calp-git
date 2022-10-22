@@ -36,14 +36,14 @@ def commit(message):
     tree_sha1 = write_tree()
 
     parent = get_commit_sha1("HEAD")
-    repo = find_repository()
 
-    current_commit = read_object(repo, parent)
-    data = current_commit.commit_data
-    if data[b"tree"] == tree_sha1.encode("ascii"):
-        print("Nothing to commit")
-        return
     if parent:
+        repo = find_repository()
+        current_commit = read_object(repo, parent)
+        data = current_commit.commit_data
+        if data[b"tree"] == tree_sha1.encode("ascii"):
+            print("Nothing to commit")
+            return
         commit_sha1 = write_commit(tree_sha1, message, [parent])
     else:
         commit_sha1 = write_commit(tree_sha1, message)
