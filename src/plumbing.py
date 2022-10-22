@@ -91,15 +91,13 @@ def ls_tree(tree_ish):
 
 
 def write_tree():
-    repo = find_repository()
     entries = read_entries()
     parsed_entries = parse_index_entries_to_dict(entries)
-    sha = hash_tree_recurisve(repo.worktree, parsed_entries, repo)
-    # TODO
-    print(sha)
+    sha = hash_tree_recurisve(parsed_entries)
+    return sha
 
 
-def hash_tree_recurisve(root_path: str, entries: dict, repo: Repository):
+def hash_tree_recurisve(entries: dict):
     """
     {
         "A": {
@@ -113,25 +111,19 @@ def hash_tree_recurisve(root_path: str, entries: dict, repo: Repository):
         "main.txt": "f79dfaa021b9972c4a56da87269684e9a73539b5"
     }
     """
-    tree = Tree(repo)
     data = b""
     for entry, item in entries.items():
         if isinstance(item, dict):
             # Is a directory
-            sha = hash_tree_recurisve(entry, item, repo)
+            sha_child = hash_tree_recurisve(item)
             mode = b"40000"
             path = entry.encode("ascii")
-            data += mode + b" " + path + b"\0" + sha
+            data += mode + b" " + path + b"\0" + sha_child
         else:
             # Is a file
-            # TODO: capaz usar hash_object? en teoria ya existe el blob en el repo,
-            # porque estamos recorriendo el index file
+            mode = b"100644"
+            path = entry.encode("ascii")
+            data += mode + b" " + path + b"\0" + item
 
-            # mode = b"100644"
-            # path = entry.encode("ascii")
-            # data += mode + b" " + path + b"\0" + item
-
-            ...
-    # TODO: Escribir los trees aca (creo)
-    # Acarrar data, comprimir con zlib, y crear archivo con el sha1
-    return tree.serialize()
+    sha = hash_object(b"tree", data, True)
+    return sha
