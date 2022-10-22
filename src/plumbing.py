@@ -46,7 +46,7 @@ def find_object(repo, ref, object_type=None) -> str:
     return ref
 
 
-def hash_object(type, path, write):
+def hash_object(type, path, write) -> str:
     """ """
     repo = None
     object_type = type.encode("ascii")
@@ -118,12 +118,14 @@ def hash_tree_recurisve(entries: dict):
             sha_child = hash_tree_recurisve(item)
             mode = b"40000"
             path = entry.encode("ascii")
-            data += mode + b" " + path + b"\0" + sha_child
+            data += mode + b" " + path + b"\0" + sha_child.encode("ascii")
         else:
             # Is a file
             mode = b"100644"
             path = entry.encode("ascii")
-            data += mode + b" " + path + b"\0" + item
+            print(f"path: {type(path)}")
+            print(f"item: {type(item)}")
+            data += mode + b" " + path + b"\0" + item.encode("ascii")
 
-    sha = hash_object(b"tree", data, True)
+    sha = hash_object("tree", data, True)
     return sha
