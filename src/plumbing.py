@@ -3,8 +3,8 @@ import zlib
 from hashlib import sha1
 from typing import List
 
-from src.index import IndexEntry
-from src.repository import find_repository
+from src.index import IndexEntry, parse_index_entries_to_dict, read_entries
+from src.repository import Repository, find_repository
 
 from .objects.blob import Blob
 from .objects.commit import Commit
@@ -88,3 +88,45 @@ def ls_tree(tree_ish):
         mode = "0" * (6 - len(item.mode)) + item.mode.decode("ascii")
         type = read_object(repo, item.sha).object_type.decode("ascii")
         print(f"{mode} {type} {item.sha}\t{item.path.decode('ascii')}")
+
+
+def write_tree():
+    repo = find_repository()
+    entries = read_entries()
+    parsed_entries = parse_index_entries_to_dict(entries)
+    sha = hash_tree_recurisve(repo.worktree, parsed_entries, repo)
+    # TODO
+    print(sha)
+
+
+def hash_tree_recurisve(root_path: str, entries: dict, repo: Repository):
+    """
+    {
+        "A": {
+            "5.txt": "b729d9500ea4c046f88c4e5c084151ec2cbb6427",
+            "B": {
+                "1.txt": "b729d9500ea4c046f88c4e5c084251ec2cbb64a7",
+                "2.txt": "b729d9500ea4c046f88c4e5c084251ec2cbb6427",
+                "3.txt": "b08f7b08213644cd1609487a660a26cb3edc3813"
+            }
+        },
+        "main.txt": "f79dfaa021b9972c4a56da87269684e9a73539b5"
+    }
+    """
+    tree = Tree(repo)
+    data = b""
+    for entry, item in entries.items():
+        if isinstance(item, dict):
+            # Is a directory
+            sha = hash_tree_recurisve(os.path.join(root_path, entry), item, repo)
+            mode = b"40000"
+            path = entry.encode("ascii")
+            data += mode + b" " + path + b"\0" + sha
+        else:
+            # Is a file
+            # TODO: capaz usar hash_object? en teoria ya existe el blob en el repo,
+            # porque estamos recorriendo el index file
+            ...
+    # TODO: Escribir los trees aca (creo)
+    # Acarrar data, comprimir con zlib, y crear archivo con el sha1
+    return tree.serialize()

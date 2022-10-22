@@ -53,7 +53,7 @@ def write_entries(entries: List[IndexEntry]):
         file.write(data)
 
 
-def parse_index_to_dict(entires: List[IndexEntry]) -> dict:
+def parse_index_entries_to_dict(entires: List[IndexEntry]) -> dict:
     """
     Build a dict of directories and files from the entries in the index file.
 
