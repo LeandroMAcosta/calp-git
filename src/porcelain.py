@@ -60,8 +60,8 @@ def status():
         if not entry.hash in hashes and entry.path not in modified:
             deleted.append(entry.path)
 
-    print_status_messages(modified, untracked, deleted)
-
-
-
-    
+    return {
+        "deleted": deleted,
+        "modified": modified,
+        "untracked": untracked,
+    }

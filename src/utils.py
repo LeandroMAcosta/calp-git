@@ -12,7 +12,11 @@ def get_files_rec(directory):
 
     return files
 
-def print_status_messages(modified, untracked, deleted):
+def print_status_messages(status):
+    modified = status["modified"]
+    untracked = status["untracked"]
+    deleted = status["deleted"]
+
     FAIL = '\033[91m' # red color
     ENDC = '\033[0m'
 
@@ -35,3 +39,6 @@ def print_status_messages(modified, untracked, deleted):
         )
         for file in untracked:
             print(f"\t{FAIL}{file}{ENDC}")
+    
+    if len(modified) == 0 and len(deleted) == 0 and len(untracked)== 0:
+        print("nothing to commit (working directory clean)")
