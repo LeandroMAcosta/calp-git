@@ -108,3 +108,14 @@ def ls_tree(tree_ish):
         mode = "0" * (6 - len(item.mode)) + item.mode.decode("ascii")
         type = read_object(repo, item.sha).object_type.decode("ascii")
         print(f"{mode} {type} {item.sha}\t{item.path.decode('ascii')}")
+
+
+def get_ref(ref):
+    repo = find_repository()
+    with open(repo.build_path(ref), "r") as file:
+        data = file.read().strip()
+
+    if data.startswith("ref: "):
+        return get_ref(data[5:])
+    else:
+        return data
