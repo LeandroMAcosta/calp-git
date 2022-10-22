@@ -93,3 +93,9 @@ def status():
         "modified": modified,
         "untracked": untracked,
     }
+
+
+def checkout(branch):
+    if not branch:
+        raise Exception("use '-b' followed by the branch name")
+    print(branch)

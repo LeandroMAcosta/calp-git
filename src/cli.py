@@ -27,6 +27,16 @@ class CmdStatus(Command):
         STATUS = porcelain.status()
         print_status_messages(STATUS)
 
+class CmdCheckout(Command):
+    def run(self, args):
+        parser = optparse.OptionParser()
+        parser.add_option(
+            "-b",
+            dest="branch",
+            help="Name of the branch.",
+        )
+        options, args = parser.parse_args(args)
+        porcelain.checkout(options.branch)
 
 class CmdAdd(Command):
     def run(self, args):
@@ -111,6 +121,7 @@ class CmdCatFile(Command):
 
 
 commands = {
+    "checkout": CmdCheckout,
     "init": CmdInit,
     "status": CmdStatus,
     "add": CmdAdd,
