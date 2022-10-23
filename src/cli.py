@@ -107,7 +107,8 @@ class CmdCatFile(Command):
         )
         parser.add_argument("object", help="The object to display")
         args = parser.parse_args(args)
-        plumbing.cat_file(args.type, args.object)
+        data = plumbing.cat_file(args.type, args.object)
+        print(data)
 
 
 class CmdCherryPick(Command):

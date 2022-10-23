@@ -84,10 +84,7 @@ def cat_file(object_type, object) -> str:
     """ """
     repo = find_repository()
     obj = read_object(repo, find_object(repo, object, object_type=object_type))
-    # for key, value in obj.de():
-    #     print(f"{key}: {value}")
     res: bytes = obj.serialize()
-    print(res.decode("ascii"))
     return res.decode("ascii")
 
 
