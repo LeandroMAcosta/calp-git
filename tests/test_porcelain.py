@@ -262,11 +262,17 @@ class TestGitCommands(unittest.TestCase):
         os.chdir(ABSOLUTE_PATH)
         # execute bash command ../calp init .
         os.system("../../calp init")
+        os.system("echo 'main' > main.txt")
+        os.system("../../calp add main.txt")
+        os.system("../../calp commit -m 'first commit'")
         os.system("../../calp checkout -b new_branch")
         expected_path = (
             f"{ABSOLUTE_PATH}/{GITDIR}/refs/heads/new_branch"
         )
         self.assertTrue(os.path.exists(expected_path))
+        with open(f"{ABSOLUTE_PATH}/{GITDIR}/HEAD",'r') as file:
+            branch = file.read().split('/')[-1]
+            self.assertEqual(branch,'new_branch')
 
     def test_checkout_failed(self):        
         # assert that tmp_path not exists
@@ -278,3 +284,34 @@ class TestGitCommands(unittest.TestCase):
         with open(f"{ABSOLUTE_PATH}/{GITDIR}/HEAD",'r') as file:
             branch = file.read().split('/')[-1]
             self.assertEqual(branch,'master')
+
+    def test_checkout_verify_index_update(self):
+        # assert that tmp_path not exists
+        self.assertTrue(os.path.exists(ABSOLUTE_PATH))
+        os.chdir(ABSOLUTE_PATH)
+        # execute bash command ../calp init .
+        os.system("../../calp init")
+        os.system("echo 'main' > main.txt")
+        correct_data = ""
+        with open(f"{ABSOLUTE_PATH}/main.txt") as file:
+            correct_data = file.read()
+        os.system("../../calp add main.txt")
+        os.system("../../calp commit -m 'first commit'")
+        os.system("../../calp checkout -b new_branch")
+        with open(f"{ABSOLUTE_PATH}/{GITDIR}/HEAD",'r') as file:
+            branch = file.read().split('/')[-1]
+            self.assertEqual(branch,'new_branch')
+        os.system("echo 'naim' > main.txt")
+        with open(f"{ABSOLUTE_PATH}/main.txt") as file:
+            self.assertNotEqual(correct_data,file.read())
+        os.system("../../calp add main.txt")
+        os.system("../../calp commit -m 'second commit'")
+        os.system("../../calp checkout master")
+        with open(f"{ABSOLUTE_PATH}/{GITDIR}/HEAD",'r') as file:
+            branch = file.read().split('/')[-1]
+            self.assertEqual(branch,'master')
+        with open(f"{ABSOLUTE_PATH}/main.txt") as file:
+            self.assertEqual(correct_data,file.read())
+        
+        
+        
