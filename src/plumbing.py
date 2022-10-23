@@ -199,7 +199,6 @@ def get_commit(commit_ref):
     if os.path.exists(path):
         with open(path, "r") as file:
             commit_ref = file.read().strip()
-
     return read_object(repo, commit_ref)
 
 
