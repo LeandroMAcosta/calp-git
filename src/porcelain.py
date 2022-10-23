@@ -2,7 +2,7 @@ import os
 from typing import List
 
 from src.index import IndexEntry, read_entries, write_entries
-from src.plumbing import (get_commit_sha1, hash_object, read_object,
+from src.plumbing import (get_commit, get_reference, hash_object, read_object,
                           update_current_ref, write_commit, write_tree)
 from src.repository import GITDIR, create_repository, find_repository
 from src.utils import get_files_rec, print_status_messages
@@ -35,7 +35,7 @@ def add(paths):
 def commit(message):
     tree_sha1 = write_tree()
 
-    parent = get_commit_sha1("HEAD")
+    parent = get_reference("HEAD")
 
     if parent:
         repo = find_repository()
@@ -93,3 +93,10 @@ def status():
         "modified": modified,
         "untracked": untracked,
     }
+
+
+def cherry_pick(commit_ref):
+    pass
+    # TODO:
+    # commit = get_commit(commit_ref)
+    # tree_sha = commit.commit_data[b"tree"].decode("ascii")

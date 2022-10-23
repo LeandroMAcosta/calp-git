@@ -110,6 +110,14 @@ class CmdCatFile(Command):
         plumbing.cat_file(args.type, args.object)
 
 
+class CmdCherryPick(Command):
+    def run(self, args):
+        parser = argparse.ArgumentParser()
+        parser.add_argument("commit_ref", help="The commit to cherry-pick")
+        args = parser.parse_args(args)
+        porcelain.cherry_pick(args.commit_ref)
+
+
 commands = {
     "init": CmdInit,
     "status": CmdStatus,
@@ -119,4 +127,5 @@ commands = {
     "hash-object": CmdHashObject,
     "cat-file": CmdCatFile,
     "ls-tree": CmdLsTree,
+    "cherry-pick": CmdCherryPick,
 }

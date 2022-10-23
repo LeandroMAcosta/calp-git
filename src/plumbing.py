@@ -172,7 +172,7 @@ def hash_tree_recursive(entries: dict) -> str:
     return sha
 
 
-def get_commit_sha1(ref):
+def get_reference(ref):
     """
     Get the branch name or HEAD, and return the commit sha
     cases:
@@ -187,9 +187,25 @@ def get_commit_sha1(ref):
         data = file.read().strip()
 
     if data.startswith("ref: "):
-        return get_commit_sha1(data[5:])
+        return get_reference(data[5:])
     else:
         return data
+
+
+def get_commit(commit_ref):
+    # commit_ref: sha1 of commit | branch_name
+    repo = find_repository()
+    path = repo.build_path(["refs", "heads", commit_ref])
+    if os.path.exists(path):
+        with open(path, "r") as file:
+            commit_ref = file.read().strip()
+
+    return read_object(repo, commit_ref)
+
+
+def get_current_commit():
+    current_commit_ref = get_reference("HEAD")
+    return get_commit(current_commit_ref)
 
 
 def update_current_ref(sha):

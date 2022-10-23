@@ -3,7 +3,7 @@ import os
 import unittest
 
 from src.index import read_entries
-from src.plumbing import (get_commit_changes, get_commit_sha1, read_object,
+from src.plumbing import (get_commit_changes, get_reference, read_object,
                           write_tree)
 from src.porcelain import status
 from src.repository import find_repository
@@ -220,7 +220,7 @@ class TestGitCommands(unittest.TestCase):
 
         repo = find_repository()
         tree_hash = write_tree()
-        commit_sha = get_commit_sha1("HEAD")
+        commit_sha = get_reference("HEAD")
         commit = read_object(repo, commit_sha)
         self.assertTrue(commit.commit_data[b"tree"] == tree_hash.encode("ascii"))
 
@@ -236,15 +236,16 @@ class TestGitCommands(unittest.TestCase):
         os.system("echo 'main' > main.txt")
         os.system("../../calp add main.txt")
         os.system("../../calp commit -m 'first commit'")
-        first_commit_sha1 = get_commit_sha1("HEAD")
+        first_commit_sha1 = get_reference("HEAD")
 
         os.system("mkdir A")
         os.system("echo 'testing' > A/file.txt")
         os.system("../../calp add A/file.txt")
         os.system("../../calp commit -m 'second commit'")
-        second_commit_sha1 = get_commit_sha1("HEAD")
+        second_commit_sha1 = get_reference("HEAD")
 
         self.assertTrue(first_commit_sha1 != second_commit_sha1)
         changes = list(get_commit_changes(second_commit_sha1))
         self.assertTrue(changes[0][0] == "A/file.txt")
         self.assertTrue(changes[0][1] == "038d718da6a1ebbc6a7780a96ed75a70cc2ad6e2")
+        self.assertTrue(len(changes) == 1)
