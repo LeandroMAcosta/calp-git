@@ -257,16 +257,20 @@ class TestGitCommands(unittest.TestCase):
         os.system("../../calp init")
 
         os.system("echo '1' > 1.txt")
-        os.system("../../calp add 1.txt")  # d00491fd7e5bb6fa28c517a0bb32b8b506539d4d
+        os.system("../../calp add 1.txt")       # d00491fd7e5bb6fa28c517a0bb32b8b506539d4d
         os.system("../../calp commit -m 'a'")
 
         os.system("echo '2' > 2.txt")            # 0cfbf08886fca9a91cb753ec8734c84fcbe52c9f
         os.system("../../calp add 2.txt")
         os.system("../../calp commit -m 'b'")
+        commit_sha_main = get_reference("HEAD")
 
         # Simulate calp checkout -b feature
         os.system("cat .calp/refs/heads/master | { read commit; echo $commit > .calp/refs/heads/feature; }")
         os.system("echo 'ref: refs/heads/feature' > .calp/HEAD")
+        commit_sha_feature = get_reference("HEAD")
+
+        self.assertTrue(commit_sha_main == commit_sha_feature)
 
         os.system("echo '3' > 3.txt")        # 00750edc07d6415dcc07ae0351e9397b0222b7ba
         os.system("echo 'new 2' > 2.txt")    # aef0730e4d285b798126f52c07a06b9efd1a3c9d
@@ -275,9 +279,24 @@ class TestGitCommands(unittest.TestCase):
 
         # Simulate calp checkout master
         os.system("echo 'ref: refs/heads/master' > .calp/HEAD")
+        self.assertTrue(get_reference("refs/heads/master") == commit_sha_main)
 
         os.system("echo '2' > 2.txt")        # 0cfbf08886fca9a91cb753ec8734c84fcbe52c9f
         os.system("rm 3.txt")
         os.system("echo 'd00491fd7e5bb6fa28c517a0bb32b8b506539d4d 1.txt\n0cfbf08886fca9a91cb753ec8734c84fcbe52c9f 2.txt' > .calp/index")
 
         os.system("../../calp cherry-pick feature")
+
+        entries = read_entries()
+
+        self.assertTrue(len(entries) == 3)
+        self.assertTrue(entries[0].path == "1.txt")
+        self.assertTrue(entries[1].path == "2.txt")
+        self.assertTrue(entries[2].path == "3.txt")
+
+        repo = find_repository()
+        obj = read_object(repo, entries[1].hash)
+        self.assertTrue(obj.blob_data == b"new 2\n")
+
+        obj = read_object(repo, entries[2].hash)
+        self.assertTrue(obj.blob_data == b"3\n")
