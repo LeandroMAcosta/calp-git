@@ -21,6 +21,7 @@ class CmdInit(Command):
         options, args = parser.parse_args(args)
         porcelain.init(options.path)
 
+
 class CmdStatus(Command):
     def run(self, args):
         STATUS = porcelain.status()
@@ -45,7 +46,11 @@ class CmdLog(Command):
 
 class CmdCommit(Command):
     def run(self, args):
-        ...
+        # required -m message
+        parser = argparse.ArgumentParser()
+        parser.add_argument("-m", "--message", required=True)
+        args = parser.parse_args(args)
+        porcelain.commit(args.message)
 
 
 class CmdLsTree(Command):
@@ -80,7 +85,14 @@ class CmdHashObject(Command):
             help="Hash object as it were located at the given path.",
         )
         options, args = parser.parse_args(args)
-        sha = plumbing.hash_object(options.type, options.path, options.write)
+        if options.type == "blob":
+            sha = plumbing.hash_object(
+                options.type, path=options.path, write=options.write
+            )
+        else:
+            sha = plumbing.hash_object(
+                options.type, data=options.path, write=options.write
+            )
         print(sha)
 
 

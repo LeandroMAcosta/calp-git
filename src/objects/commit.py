@@ -4,6 +4,24 @@ from .base import BaseObject
 
 
 class Commit(BaseObject):
+    """
+    Format of a commit object:
+
+    commit {size}\0
+    tree {tree_sha}
+    parent {parent1_sha}
+    parent {parent2_sha}
+    ...
+    parent {parentn_sha}
+    author {author_name} <{author_email}> {author_date_seconds} {author_date_timezone}
+    committer {committer_name} <{committer_email}> {committer_date_seconds} {committer_date_timezone}
+    {commit message}
+
+    links:
+    https://git-scm.com/book/en/v2/Git-Internals-Git-Objects
+    https://stackoverflow.com/questions/22968856/what-is-the-file-format-of-a-git-commit-object-data-structure
+    """
+
     object_type = b"commit"
 
     def serialize(self):

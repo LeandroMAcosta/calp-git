@@ -1,9 +1,9 @@
 import os
 import zlib
+from datetime import date
 from hashlib import sha1
-from typing import List
 
-from src.index import IndexEntry
+from src.index import parse_index_entries_to_dict, read_entries
 from src.repository import find_repository
 
 from .objects.blob import Blob
@@ -19,26 +19,6 @@ def object_class(object_type):
         return OBJECT_CHOICES[object_type]
     except KeyError:
         raise TypeError(f"Unknown type {object_type}")
-
-
-def parse_index_to_dict(entires: List[IndexEntry]) -> dict:
-    """
-    Build a dict of directories and files from the entries in the index file.
-    """
-    dict = {}
-    for entry in entires:
-        path = entry.path
-        if "/" not in path:
-            dict[path] = entry.hash
-        else:
-            dirs = path.split("/")
-            parent = dict
-            for dir in dirs[:-1]:
-                if dir not in parent:
-                    parent[dir] = {}
-                parent = parent[dir]
-            parent[dirs[-1]] = entry.hash
-    return dict
 
 
 def read_object(repo, sha):
@@ -66,26 +46,32 @@ def find_object(repo, ref, object_type=None) -> str:
     return ref
 
 
-def hash_object(type, path, write):
-    """ """
+def hash_object(object_type, path=None, data=None, write=True) -> str:
+    if object_type == "blob":
+        with open(path, "rb") as file:  # type: ignore
+            data = file.read()
+            return hash_object_data(object_type, data, write)
+    else:
+        return hash_object_data(object_type, data, write)
+
+
+def hash_object_data(object_type, data, write) -> str:
     repo = None
-    object_type = type.encode("ascii")
+    object_type = object_type.encode("ascii")
 
-    with open(path, "rb") as file:
-        data = file.read()
-        obj_class = object_class(object_type)
-        obj = obj_class(repo, data)
+    obj_class = object_class(object_type)
+    obj = obj_class(repo, data)
 
-        length = len(obj.data)
-        header = obj.object_type + b" " + str(length).encode("ascii") + b"\0"
-        full_data = header + obj.serialize()
-        sha = sha1(full_data).hexdigest()
+    length = len(obj.data)
+    header = obj.object_type + b" " + str(length).encode("ascii") + b"\0"
+    full_data = header + obj.serialize()
+    sha: str = sha1(full_data).hexdigest()
 
-        if write:
-            repo = find_repository()
-            path = repo.create_dir("objects", sha[0:2])
-            with open(f"{path}/{sha[2:]}", "wb") as file:
-                file.write(zlib.compress(full_data))
+    if write:
+        repo = find_repository()
+        path = repo.create_dir("objects", sha[0:2])
+        with open(f"{path}/{sha[2:]}", "wb") as file:
+            file.write(zlib.compress(full_data))
     return sha
 
 
@@ -110,12 +96,105 @@ def ls_tree(tree_ish):
         print(f"{mode} {type} {item.sha}\t{item.path.decode('ascii')}")
 
 
-def get_ref(ref):
+def write_tree() -> str:
+    """
+    Create recursively a tree object from the index
+    """
+    entries = read_entries()
+    parsed_entries = parse_index_entries_to_dict(entries)
+    sha = hash_tree_recursive(parsed_entries)
+    return sha
+
+
+def write_commit(tree_sha, message, parents=[]):
+    data = b"tree " + tree_sha.encode("ascii") + b"\n"
+    for parent in parents:
+        data += b"parent " + parent.encode("ascii") + b"\n"
+
+    # seconds since 1970
+    date_seconds = str(int(date.today().strftime("%s"))).encode("ascii")
+    date_timezone = b"+0000"
+    data += (
+        b"author pepito <pepito@calp.com> "
+        + date_seconds
+        + b" "
+        + date_timezone
+        + b"\n"
+    )
+    data += (
+        b"committer pepito <pepito@calp.com> "
+        + date_seconds
+        + b" "
+        + date_timezone
+        + b"\n"
+    )
+    data += b"\n" + message.encode("ascii")
+
+    commit_sha1 = hash_object("commit", data=data, write=True)
+    print(commit_sha1)
+    return commit_sha1
+
+
+def hash_tree_recursive(entries: dict) -> str:
+    """
+    {
+        "A": {
+            "5.txt": "b729d9500ea4c046f88c4e5c084151ec2cbb6427",
+            "B": {
+                "1.txt": "b729d9500ea4c046f88c4e5c084251ec2cbb64a7",
+                "2.txt": "b729d9500ea4c046f88c4e5c084251ec2cbb6427",
+                "3.txt": "b08f7b08213644cd1609487a660a26cb3edc3813"
+            }
+        },
+        "main.txt": "f79dfaa021b9972c4a56da87269684e9a73539b5"
+    }
+    """
+    data = b""
+    for entry, item in entries.items():
+        if isinstance(item, dict):
+            # Is a directory
+            sha_child = hash_tree_recursive(item)
+            mode = b"40000"
+            path = entry.encode("ascii")
+            data += mode + b" " + path + b"\x00" + bytes.fromhex(sha_child)
+        else:
+            # Is a file
+            data += (
+                b"100644" + b" " + entry.encode("ascii") + b"\x00" + bytes.fromhex(item)
+            )
+    sha = hash_object("tree", data=data, write=True)
+    return sha
+
+
+def get_commit_sha1(ref):
+    """
+    Get the branch name or HEAD, and return the commit sha
+    cases:
+        HEAD: {commit-sha-1} o 'ref: refs/heads/main'
+    """
     repo = find_repository()
+    path = repo.build_path(ref)
+    if not os.path.exists(path):
+        return None
+
     with open(repo.build_path(ref), "r") as file:
         data = file.read().strip()
 
     if data.startswith("ref: "):
-        return get_ref(data[5:])
+        return get_commit_sha1(data[5:])
     else:
         return data
+
+
+def update_current_ref(sha):
+    repo = find_repository()
+    with open(repo.build_path("HEAD"), "r") as file:
+        head_data = file.read().strip()
+
+    if head_data.startswith("ref: "):
+        ref = head_data[5:]
+        with open(repo.build_path(ref), "w") as file:
+            file.write(sha)
+    else:
+        with open(repo.build_path("HEAD"), "w") as file:
+            file.write(sha)

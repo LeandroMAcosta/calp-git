@@ -11,14 +11,12 @@ class IndexEntry:
         self.hash = hash
 
     def deserialize(self, data: bytes):
+        # TODO: Implement
         ...
-
-    # TODO: Implement
 
     def serialize(self) -> bytes:
+        # TODO: Implement
         ...
-
-    # TODO: Implement
 
 
 def read_entries() -> List[IndexEntry]:
@@ -53,3 +51,42 @@ def write_entries(entries: List[IndexEntry]):
     index_path = repository.build_path("index")
     with open(index_path, "wb") as file:
         file.write(data)
+
+
+def parse_index_entries_to_dict(entires: List[IndexEntry]) -> dict:
+    """
+    Build a dict of directories and files from the entries in the index file.
+
+    .git/index
+    b729d9500ea4c046f88c4e5c084251ec2cbb64a7 A/B/1.txt
+    b729d9500ea4c046f88c4e5c084251ec2cbb6427 A/B/2.txt
+    b729d9500ea4c046f88c4e5c084151ec2cbb6427 A/5.txt
+    b08f7b08213644cd1609487a660a26cb3edc3813 A/B/3.txt
+    f79dfaa021b9972c4a56da87269684e9a73539b5 main.txt
+
+    {
+        "A": {
+            "5.txt": "b729d9500ea4c046f88c4e5c084151ec2cbb6427",
+            "B": {
+                "1.txt": "b729d9500ea4c046f88c4e5c084251ec2cbb64a7",
+                "2.txt": "b729d9500ea4c046f88c4e5c084251ec2cbb6427",
+                "3.txt": "b08f7b08213644cd1609487a660a26cb3edc3813"
+            }
+        },
+        "main.txt": "f79dfaa021b9972c4a56da87269684e9a73539b5"
+    }
+    """
+    dict = {}
+    for entry in entires:
+        path = entry.path
+        if "/" not in path:
+            dict[path] = entry.hash
+        else:
+            dirs = path.split("/")
+            parent = dict
+            for dir in dirs[:-1]:
+                if dir not in parent:
+                    parent[dir] = {}
+                parent = parent[dir]
+            parent[dirs[-1]] = entry.hash
+    return dict
