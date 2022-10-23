@@ -97,14 +97,6 @@ def status():
 
 def checkout(new_branch, args):
     repo = find_repository()
-    if len(args) < 1:
-        if new_branch: 
-            print('ERROR: Flag "-b" requires value')
-        else:
-            STATUS = status()
-            print_status_messages(STATUS)
-        return
-
 
     branch_name = args[0]
     branch_path = repo.worktree + "/" + GITDIR + "/refs/heads/" + branch_name

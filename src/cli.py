@@ -32,12 +32,20 @@ class CmdCheckout(Command):
         parser = optparse.OptionParser()
         parser.add_option(
             "-b",
-            dest="new_branch",
+            dest="is_new_branch",
             action="store_true",
             help="Name of the branch.",
         )
         options, args = parser.parse_args(args)
-        porcelain.checkout(options.new_branch, args)
+        
+        if options.is_new_branch and len(args) < 1:
+            print('ERROR: Flag "-b" requires value')
+            return
+        
+        if len(args) < 1:
+            porcelain.status()
+        else:
+            porcelain.checkout(options.new_branch, args)
 
 class CmdAdd(Command):
     def run(self, args):
