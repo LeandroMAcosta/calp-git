@@ -251,4 +251,33 @@ class TestGitCommands(unittest.TestCase):
         self.assertTrue(len(changes) == 1)
 
     def test_cherry_pick(self):
-        ...
+        self.assertTrue(os.path.exists(ABSOLUTE_PATH))
+        os.chdir(ABSOLUTE_PATH)
+
+        os.system("../../calp init")
+
+        os.system("echo '1' > 1.txt")
+        os.system("../../calp add 1.txt")  # d00491fd7e5bb6fa28c517a0bb32b8b506539d4d
+        os.system("../../calp commit -m 'a'")
+
+        os.system("echo '2' > 2.txt")            # 0cfbf08886fca9a91cb753ec8734c84fcbe52c9f
+        os.system("../../calp add 2.txt")
+        os.system("../../calp commit -m 'b'")
+
+        # Simulate calp checkout -b feature
+        os.system("cat .calp/refs/heads/master | { read commit; echo $commit > .calp/refs/heads/feature; }")
+        os.system("echo 'ref: refs/heads/feature' > .calp/HEAD")
+
+        os.system("echo '3' > 3.txt")        # 00750edc07d6415dcc07ae0351e9397b0222b7ba
+        os.system("echo 'new 2' > 2.txt")    # aef0730e4d285b798126f52c07a06b9efd1a3c9d
+        os.system("../../calp add 2.txt 3.txt")
+        os.system("../../calp commit -m 'c'")
+
+        # Simulate calp checkout master
+        os.system("echo 'ref: refs/heads/master' > .calp/HEAD")
+
+        os.system("echo '2' > 2.txt")        # 0cfbf08886fca9a91cb753ec8734c84fcbe52c9f
+        os.system("rm 3.txt")
+        os.system("echo 'd00491fd7e5bb6fa28c517a0bb32b8b506539d4d 1.txt\n0cfbf08886fca9a91cb753ec8734c84fcbe52c9f 2.txt' > .calp/index")
+
+        os.system("../../calp cherry-pick feature")
