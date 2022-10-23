@@ -60,7 +60,10 @@ class CmdLsTree(Command):
         options, args = parser.parse_args(args)
         if options.tree_ish is None:
             parser.error("tree-ish is required")
-        plumbing.ls_tree(options.tree_ish)
+
+        items = plumbing.ls_tree(options.tree_ish)
+        for mode, type, sha, path in items:
+            print(f"{mode} {type} {sha}\t{path}")
 
 
 class CmdHashObject(Command):

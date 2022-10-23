@@ -70,6 +70,15 @@ def parse_to_leaf(raw: bytes) -> TreeLeaf:
     sha = raw[y + 1 :]
     assert len(sha) == 20
     parsed_sha1 = hex(int.from_bytes(sha, "big"))[2:]
+    if len(parsed_sha1) < 40:
+        """
+        The hex representation of a SHA-1 hash is 40 characters long.
+        If the hex representation is shorter than 40 characters, it is
+        left-padded with zeros.
+        e.g. If the original sha1 starts with 0x038.... then
+        parsed_sha1 starts with 38, so we have to add 0s to the left
+        """
+        parsed_sha1 = "0" * (40 - 39) + parsed_sha1
 
     return TreeLeaf(mode, path, parsed_sha1, y + 21)
 
