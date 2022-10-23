@@ -1,7 +1,9 @@
 # Test file
+from contextlib import suppress
+import io
 import os
 import unittest
-
+import sys
 from src.index import read_entries
 from src.plumbing import (get_commit_changes, get_commit_sha1, read_object,
                           write_tree)
@@ -253,14 +255,6 @@ class TestGitCommands(unittest.TestCase):
         changes = list(get_commit_changes(second_commit_sha1))
         self.assertTrue(changes[0][0] == "A/file.txt")
         self.assertTrue(changes[0][1] == "038d718da6a1ebbc6a7780a96ed75a70cc2ad6e2")
-
-    def test_checkout_failed(self):
-        # assert that tmp_path not exists
-        self.assertTrue(os.path.exists(ABSOLUTE_PATH))
-        os.chdir(ABSOLUTE_PATH)
-        # execute bash command ../calp init .
-        os.system("../../calp init")
-
         
     def test_checkout_new_branch_ok(self):
         # assert that tmp_path not exists
@@ -268,11 +262,19 @@ class TestGitCommands(unittest.TestCase):
         os.chdir(ABSOLUTE_PATH)
         # execute bash command ../calp init .
         os.system("../../calp init")
+        os.system("../../calp checkout -b new_branch")
+        expected_path = (
+            f"{ABSOLUTE_PATH}/{GITDIR}/refs/heads/new_branch"
+        )
+        self.assertTrue(os.path.exists(expected_path))
 
-    def test_checkout_new_branch_already_exists(self):
+    def test_checkout_failed(self):        
         # assert that tmp_path not exists
         self.assertTrue(os.path.exists(ABSOLUTE_PATH))
         os.chdir(ABSOLUTE_PATH)
-
         # execute bash command ../calp init .
         os.system("../../calp init")
+        os.system("../../calp checkout fake_branch")
+        with open(f"{ABSOLUTE_PATH}/{GITDIR}/HEAD",'r') as file:
+            branch = file.read().split('/')[-1]
+            self.assertEqual(branch,'master')
