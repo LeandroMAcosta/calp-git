@@ -19,6 +19,11 @@ if not os.path.exists(ABSOLUTE_PATH):
 
 
 class TestGitCommands(unittest.TestCase):
+
+    def setUp(self):
+        os.system(f"rm -rf {ABSOLUTE_PATH}/*")
+        return super().setUp()
+    
     def tearDown(self):
         os.system(f"rm -rf {ABSOLUTE_PATH}/*")
         os.system(f"rm -rf {ABSOLUTE_PATH}/{GITDIR}")
@@ -248,3 +253,26 @@ class TestGitCommands(unittest.TestCase):
         changes = list(get_commit_changes(second_commit_sha1))
         self.assertTrue(changes[0][0] == "A/file.txt")
         self.assertTrue(changes[0][1] == "038d718da6a1ebbc6a7780a96ed75a70cc2ad6e2")
+
+    def test_checkout_failed(self):
+        # assert that tmp_path not exists
+        self.assertTrue(os.path.exists(ABSOLUTE_PATH))
+        os.chdir(ABSOLUTE_PATH)
+        # execute bash command ../calp init .
+        os.system("../../calp init")
+
+        
+    def test_checkout_new_branch_ok(self):
+        # assert that tmp_path not exists
+        self.assertTrue(os.path.exists(ABSOLUTE_PATH))
+        os.chdir(ABSOLUTE_PATH)
+        # execute bash command ../calp init .
+        os.system("../../calp init")
+
+    def test_checkout_new_branch_already_exists(self):
+        # assert that tmp_path not exists
+        self.assertTrue(os.path.exists(ABSOLUTE_PATH))
+        os.chdir(ABSOLUTE_PATH)
+
+        # execute bash command ../calp init .
+        os.system("../../calp init")
