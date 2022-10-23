@@ -147,7 +147,9 @@ def cherry_pick(commit_ref):
                 print(f"Nothing to update {path}")
         else:
             print(f"Created {path}")
-
+            with open(path, "w") as f:
+                f.write(commited_data)
+            add([path])
     commit(current_commit.get_message())
 
     """
