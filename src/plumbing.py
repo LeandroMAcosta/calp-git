@@ -79,7 +79,7 @@ def hash_object_data(object_type, data, write) -> str:
     return sha
 
 
-def cat_file(object_type, object):
+def cat_file(object_type, object) -> str:
     """ """
     repo = find_repository()
     obj = read_object(repo, find_object(repo, object, object_type=object_type))
@@ -87,6 +87,7 @@ def cat_file(object_type, object):
     #     print(f"{key}: {value}")
     res: bytes = obj.serialize()
     print(res.decode("ascii"))
+    return res.decode("ascii")
 
 
 def ls_tree(tree_ish) -> List:
@@ -192,7 +193,7 @@ def get_reference(ref):
         return data
 
 
-def get_commit(commit_ref):
+def get_commit(commit_ref) -> Commit:
     # commit_ref: sha1 of commit | branch_name
     repo = find_repository()
     path = repo.build_path(["refs", "heads", commit_ref])

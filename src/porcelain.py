@@ -2,8 +2,10 @@ import os
 from typing import List
 
 from src.index import IndexEntry, read_entries, write_entries
-from src.plumbing import (get_commit, get_reference, hash_object, read_object,
-                          update_current_ref, write_commit, write_tree)
+from src.plumbing import (cat_file, get_commit, get_commit_changes,
+                          get_current_commit, get_reference, hash_object,
+                          read_object, update_current_ref, write_commit,
+                          write_tree)
 from src.repository import GITDIR, create_repository, find_repository
 from src.utils import get_files_rec, print_status_messages
 
@@ -12,7 +14,7 @@ def init(path):
     create_repository(path)
 
 
-def add(paths):
+def add(paths: List[str]):
     # paths: ["A/1.txt", "2.txt"]
     # Read the entries from the staging area in the index file
     entries: List[IndexEntry] = read_entries()
@@ -95,8 +97,52 @@ def status():
     }
 
 
-def cherry_pick(commit_ref):
-    pass
-    # TODO:
-    # commit = get_commit(commit_ref)
-    # tree_sha = commit.commit_data[b"tree"].decode("ascii")
+def has_uncommited_changes():
+    modifies = status()
+    return bool(modifies["modified"] or modifies["untracked"] or modifies["deleted"])
+
+
+def cherry_pick(commit_sha1):
+    # commit_ref: sha1 of commit | branch_name
+    if has_uncommited_changes():
+        # TODO: print status
+        raise Exception("Cannot cherry-pick with uncommited changes")
+
+    repo = find_repository()
+    changes = get_commit_changes(commit_sha1)
+    current_commit = get_current_commit()
+    for path, sha in changes:
+        commited_data = cat_file("blob", sha)
+        list_path = path.split("/")
+
+        if len(list_path) > 1:
+            # If paths not exists, create it
+            os.makedirs(os.path.join(repo.worktree, "/".join(list_path[:-1])), exist_ok=True)
+
+        with open(path, "r+") as f:
+            # Current hash of the blob in the worktree
+            current_hash = hash_object("blob", path=path, write=True)
+            if current_hash != sha:
+                # Check lowest common ancestor hash, to verify if the file has been modified
+                # and detect merge conflicts
+                f.write(commited_data)
+                add([path])
+                print(f"Updated {path}")
+
+    commit(current_commit.commit_data[b"message"].decode("ascii"))
+
+    """
+    {path} {sha1}
+    for path, sha1 in differences:
+        data = cat_file(sha1)
+        list_path = path.split("/") # ["A", "B", "1.txt"]
+        repo.make_dir(list_path)
+        with open(repo.build_path(path), "wr") as f:
+            current_data = f.read()
+            # chequear lowest common ancestor entre commits
+            merged_data = merge_(current_data, data)
+            f.write(merged_data)
+        add(path)
+
+    commit()
+    """
