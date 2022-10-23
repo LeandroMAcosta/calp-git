@@ -97,6 +97,13 @@ def status():
 
 def checkout(new_branch, args):
     repo = find_repository()
+    if len(args) < 1:
+        if new_branch: raise Exception('ERROR: Flag "-b" requires value')
+        else:
+            STATUS = status()
+            print_status_messages(STATUS)
+            return
+
     branch_path = repo.worktree + "/" + GITDIR + "/refs/heads/" + args[0]
 
     # Move to an existing branch if it exists
@@ -109,13 +116,13 @@ def checkout(new_branch, args):
                 print_status_messages(STATUS)
                 return
             else:
+                print(branch_path)
                 with open(repo.build_path("HEAD"), "w+") as file:
                     file.write(f"ref: refs/heads/{args[0]}")
                 return
         else:
             raise Exception("Branch does not exist")
     
-
     if os.path.exists(branch_path):
         raise Exception("Branch already exists")
     
