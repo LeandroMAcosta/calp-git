@@ -126,7 +126,8 @@ class CmdCatFile(Command):
         )
         parser.add_argument("object", help="The object to display")
         args = parser.parse_args(args)
-        plumbing.cat_file(args.type, args.object)
+        res = plumbing.cat_file(args.type, args.object)
+        print(res.decode("ascii"))
 
 
 commands = {
