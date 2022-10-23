@@ -98,27 +98,33 @@ def status():
 def checkout(new_branch, args):
     repo = find_repository()
 
-    branch_name = args[0]
-    branch_path = repo.worktree + "/" + GITDIR + "/refs/heads/" + branch_name
+    new_branch_name = args[0]
+    new_branch_path = repo.worktree + "/" + GITDIR + "/refs/heads/" + new_branch_name
+    with open(repo.build_path("HEAD"), "r+") as file:
+        current_branch = file.read().split('/')[-1]
 
     # Move to an existing branch if it exists
     if new_branch:
         
-        if os.path.exists(branch_path):            
+        if os.path.exists(new_branch_path):            
             print("Branch already exists")
             return
-        with open(branch_path, "w+") as file:
-            # TODO: 
-            file.write("last commit hash from father branch")
+
+        # Write commit sha1
+        current_branch_path = repo.worktree + "/" + GITDIR + "/refs/heads/" + current_branch
+        with open(current_branch_path, "r") as file:
+            current_branch_commit =  file.read()
+            with open(new_branch_path, "w+") as f:
+                f.write(current_branch_commit)
+
         # Switch to new branch
         with open(repo.build_path("HEAD"), "w+") as file:
-            file.write(f"ref: refs/heads/{branch_name}")
+            file.write(f"ref: refs/heads/{new_branch_name}")
 
-        print(f"Switched to branch '{branch_name}'")
-        
+        print(f"Switched to branch '{new_branch_name}'")
         return
 
-    if os.path.exists(branch_path):
+    if os.path.exists(new_branch_path):
         STATUS = status()
         # If there are changes, they need to be commited before
         # changing to a branch
@@ -126,13 +132,12 @@ def checkout(new_branch, args):
             print_status_messages(STATUS)
         else:
             with open(repo.build_path("HEAD"), "r+") as file:
-                current_branch = file.read().split('/')[-1]
-                if current_branch == branch_name:
-                    print(f"Already on branch {branch_name}")
+                if current_branch == new_branch_name:
+                    print(f"Already on branch {new_branch_name}")
                 else:
                     file.truncate(0)
-                    file.write(f"ref: refs/heads/{branch_name}")
-                    print(f"Switched to branch {branch_name}")
+                    file.write(f"ref: refs/heads/{new_branch_name}")
+                    print(f"Switched to branch {new_branch_name}")
     else:
         print("Branch does not exist")
     return 
