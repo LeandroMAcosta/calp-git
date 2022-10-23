@@ -142,11 +142,7 @@ def cherry_pick(commit_ref):
                 # Add command outside of the context manager (with), because when we open the file, until the file is
                 # closed, is empty.
                 add([path])
-                print(f"Updated {path}")
-            else:
-                print(f"Nothing to update {path}")
         else:
-            print(f"Created {path}")
             with open(path, "w") as f:
                 f.write(commited_data)
             add([path])
