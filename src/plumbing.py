@@ -102,7 +102,7 @@ def write_tree() -> str:
     """
     entries = read_entries()
     parsed_entries = parse_index_entries_to_dict(entries)
-    sha = hash_tree_recurisve(parsed_entries)
+    sha = hash_tree_recursive(parsed_entries)
     return sha
 
 
@@ -135,7 +135,7 @@ def write_commit(tree_sha, message, parents=[]):
     return commit_sha1
 
 
-def hash_tree_recurisve(entries: dict) -> str:
+def hash_tree_recursive(entries: dict) -> str:
     """
     {
         "A": {
@@ -153,7 +153,7 @@ def hash_tree_recurisve(entries: dict) -> str:
     for entry, item in entries.items():
         if isinstance(item, dict):
             # Is a directory
-            sha_child = hash_tree_recurisve(item)
+            sha_child = hash_tree_recursive(item)
             mode = b"40000"
             path = entry.encode("ascii")
             data += mode + b" " + path + b"\x00" + bytes.fromhex(sha_child)
