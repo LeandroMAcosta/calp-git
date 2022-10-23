@@ -3,12 +3,12 @@ from typing import List
 
 from src.index import IndexEntry, read_entries, write_entries
 from src.objects.base import is_sha1
-from src.plumbing import (cat_file, get_commit, get_commit_changes,
+from src.plumbing import (cat_file, get_commit_changes,
                           get_current_commit, get_reference, hash_object,
                           read_object, update_current_ref, write_commit,
                           write_tree)
 from src.repository import GITDIR, create_repository, find_repository
-from src.utils import get_files_rec, print_status_messages
+from src.utils import get_files_rec
 
 
 def init(path):
