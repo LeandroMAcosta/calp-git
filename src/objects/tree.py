@@ -78,7 +78,7 @@ def parse_to_leaf(raw: bytes) -> TreeLeaf:
         e.g. If the original sha1 starts with 0x038.... then
         parsed_sha1 starts with 38, so we have to add 0s to the left
         """
-        parsed_sha1 = "0" * (40 - 39) + parsed_sha1
+        parsed_sha1 = "0" * (40 - len(parsed_sha1)) + parsed_sha1
 
     return TreeLeaf(mode, path, parsed_sha1, y + 21)
 

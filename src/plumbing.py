@@ -5,6 +5,7 @@ from hashlib import sha1
 from typing import List
 
 from src.index import IndexEntry, parse_index_entries_to_dict, read_entries
+from src.objects.base import is_sha1
 from src.repository import find_repository
 
 from .objects.blob import Blob
@@ -136,6 +137,7 @@ def write_commit(tree_sha, message, parents=[]):
         + date_timezone
         + b"\n"
     )
+    assert len(message) > 0
     data += b"\n" + message.encode("ascii")
 
     commit_sha1 = hash_object("commit", data=data, write=True)
@@ -177,10 +179,10 @@ def get_reference(ref):
     """
     Get the branch name or HEAD, and return the commit sha
     cases:
-        HEAD: {commit-sha-1} o 'ref: refs/heads/main'
+        HEAD: {commit-sha-1} o 'refs/heads/main'
     """
     repo = find_repository()
-    path = repo.build_path(ref)
+    path = repo.build_path(*ref.split("/"))
     if not os.path.exists(path):
         return None
 
@@ -196,8 +198,8 @@ def get_reference(ref):
 def get_commit(commit_ref) -> Commit:
     # commit_ref: sha1 of commit | branch_name
     repo = find_repository()
-    path = repo.build_path(["refs", "heads", commit_ref])
-    if os.path.exists(path):
+    if not is_sha1(commit_ref):
+        path = repo.build_path(["refs", "heads", commit_ref])
         with open(path, "r") as file:
             commit_ref = file.read().strip()
     return read_object(repo, commit_ref)

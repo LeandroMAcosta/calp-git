@@ -249,3 +249,6 @@ class TestGitCommands(unittest.TestCase):
         self.assertTrue(changes[0][0] == "A/file.txt")
         self.assertTrue(changes[0][1] == "038d718da6a1ebbc6a7780a96ed75a70cc2ad6e2")
         self.assertTrue(len(changes) == 1)
+
+    def test_cherry_pick(self):
+        ...

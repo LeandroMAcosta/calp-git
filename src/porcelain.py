@@ -2,6 +2,7 @@ import os
 from typing import List
 
 from src.index import IndexEntry, read_entries, write_entries
+from src.objects.base import is_sha1
 from src.plumbing import (cat_file, get_commit, get_commit_changes,
                           get_current_commit, get_reference, hash_object,
                           read_object, update_current_ref, write_commit,
@@ -102,8 +103,15 @@ def has_uncommited_changes():
     return bool(modifies["modified"] or modifies["untracked"] or modifies["deleted"])
 
 
-def cherry_pick(commit_sha1):
+def cherry_pick(commit_ref):
     # commit_ref: sha1 of commit | branch_name
+
+    # check if commit_sha1 is a valid sha1 chars with hashlib library
+    if is_sha1(commit_ref):
+        commit_sha1 = commit_ref
+    else:
+        commit_sha1 = get_reference(f"refs/heads/{commit_ref}")
+
     if has_uncommited_changes():
         # TODO: print status
         raise Exception("Cannot cherry-pick with uncommited changes")
@@ -119,17 +127,22 @@ def cherry_pick(commit_sha1):
             # If paths not exists, create it
             os.makedirs(os.path.join(repo.worktree, "/".join(list_path[:-1])), exist_ok=True)
 
-        with open(path, "r+") as f:
-            # Current hash of the blob in the worktree
-            current_hash = hash_object("blob", path=path, write=True)
-            if current_hash != sha:
-                # Check lowest common ancestor hash, to verify if the file has been modified
-                # and detect merge conflicts
-                f.write(commited_data)
-                add([path])
-                print(f"Updated {path}")
+        if os.path.exists(path):
+            with open(path, "w+") as f:
+                # Current hash of the blob in the worktree
+                current_hash = hash_object("blob", path=path, write=False)
+                if current_hash != sha:
+                    # TODO: Check lowest common ancestor hash, to verify if the file has been modified
+                    # and detect merge conflicts
+                    f.write(commited_data)
+                    add([path])
+                    print(f"Updated {path}")
+                else:
+                    print(f"Nothing to update {path}")
+        else:
+            print(f"Created {path}")
 
-    commit(current_commit.commit_data[b"message"].decode("ascii"))
+    commit(current_commit.get_message())
 
     """
     {path} {sha1}

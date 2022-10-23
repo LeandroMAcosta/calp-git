@@ -1,3 +1,6 @@
+import re
+
+
 class BaseObject:
 
     repo = None
@@ -15,3 +18,8 @@ class BaseObject:
 
     def deserialize(self, data):
         raise NotImplementedError
+
+
+def is_sha1(sha1: str) -> bool:
+    pattern = re.compile(r'\b[0-9a-fA-F]{40}\b')
+    return len(sha1) == 40 and pattern.match(sha1) is not None
