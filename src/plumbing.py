@@ -53,7 +53,8 @@ def hash_object(object_type, path=None, data=None, write=True) -> str:
     if object_type == "blob":
         with open(path, "rb") as file:  # type: ignore
             data = file.read()
-            return hash_object_data(object_type, data, write)
+            hash = hash_object_data(object_type, data, write)
+            return hash
     else:
         return hash_object_data(object_type, data, write)
 
@@ -69,7 +70,6 @@ def hash_object_data(object_type, data, write) -> str:
     header = obj.object_type + b" " + str(length).encode("ascii") + b"\0"
     full_data = header + obj.serialize()
     sha: str = sha1(full_data).hexdigest()
-
     assert len(sha) == 40
 
     if write:

@@ -104,6 +104,10 @@ def has_uncommited_changes():
 
 
 def cherry_pick(commit_ref):
+    """
+    Simplified version of cherry pick command.
+    We don't handle conflicts yet.
+    """
     # commit_ref: sha1 of commit | branch_name
 
     # check if commit_sha1 is a valid sha1 chars with hashlib library
@@ -128,17 +132,19 @@ def cherry_pick(commit_ref):
             os.makedirs(os.path.join(repo.worktree, "/".join(list_path[:-1])), exist_ok=True)
 
         if os.path.exists(path):
-            with open(path, "w+") as f:
-                # Current hash of the blob in the worktree
-                current_hash = hash_object("blob", path=path, write=False)
-                if current_hash != sha:
+            # Current hash of the blob in the worktree
+            current_hash = hash_object("blob", path=path, write=False)
+            if current_hash != sha:
+                with open(path, "w+") as f:
                     # TODO: Check lowest common ancestor hash, to verify if the file has been modified
                     # and detect merge conflicts
                     f.write(commited_data)
-                    add([path])
-                    print(f"Updated {path}")
-                else:
-                    print(f"Nothing to update {path}")
+                # Add command outside of the context manager (with), because when we open the file, until the file is
+                # closed, is empty.
+                add([path])
+                print(f"Updated {path}")
+            else:
+                print(f"Nothing to update {path}")
         else:
             print(f"Created {path}")
 
