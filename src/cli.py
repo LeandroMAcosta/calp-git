@@ -45,7 +45,7 @@ class CmdCheckout(Command):
         if len(args) < 1:
             porcelain.status()
         else:
-            porcelain.checkout(options.new_branch, args)
+            porcelain.checkout(options.is_new_branch, args)
 
 class CmdAdd(Command):
     def run(self, args):
