@@ -9,6 +9,11 @@ from src.utils import get_files_rec, print_status_messages
 
 
 def init(path):
+    """
+    Create an empty Calp repository.
+
+    https://git-scm.com/docs/git-init
+    """
     create_repository(path)
 
 
