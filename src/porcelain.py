@@ -16,6 +16,27 @@ def init(path):
 
 
 def add(paths: List[str]):
+    """
+    Add file contents to the index.
+
+    This command updates the index using the current content found in the working tree,
+    to prepare the content staged for the next commit. It typically adds the current content
+    of existing paths as a whole, but with some options it can also be used to add content
+    with only part of the changes made to the working tree files applied, or remove paths that
+     do not exist in the working tree anymore.
+
+    The "index" holds a snapshot of the content of the working tree, and it is this snapshot
+    that is taken as the contents of the next commit. Thus after making any changes to the
+    working tree, and before running the commit command, you must use the add command to add
+    any new or modified files to the index.
+
+    This command can be performed multiple times before a commit. It only adds the content
+    of the specified file(s) at the time the add command is run; if you want subsequent
+    changes included in the next commit, then you must run git add again to add the new
+    content to the index.
+
+    https://git-scm.com/docs/git-add
+    """
     # paths: ["A/1.txt", "2.txt"]
     # Read the entries from the staging area in the index file
     entries: List[IndexEntry] = read_entries()
@@ -36,8 +57,18 @@ def add(paths: List[str]):
 
 
 def commit(message):
+    """
+    Record changes to the repository.
+
+    Create a new commit containing the current contents of the index and the given log
+    message describing the changes. The new commit is a direct child of HEAD.
+
+    https://git-scm.com/docs/git-commit
+    """
     tree_sha1 = write_tree()
 
+    # TODO: Refactor and use the plumbing functions (commit-tree)
+    # TODO: Check changes in the working directory
     parent = get_reference("HEAD")
 
     if parent:
@@ -51,16 +82,19 @@ def commit(message):
     else:
         commit_sha1 = write_commit(tree_sha1, message)
 
-    # HEAD apunta a un commit (sha1)
-    # - Actualizar HEAD al commit nuevo
-    # HEAD apunta a una branch (ref: refs/heads/master)
-    # - Actualizar refs/heads/master al commit nuevo
     update_current_ref(commit_sha1)
     return commit_sha1
 
 
 def status():
-    # Read the entries from the staging area in the index file
+    """
+    Show the working tree status.
+    Displays paths that have differences between the index file and the current HEAD commit,
+    paths that have differences between the working tree and the index file, and paths in
+    the working tree that are not tracked by Calp (our Git implementation).
+
+    https://git-scm.com/docs/git-status
+    """
     entries: List[IndexEntry] = read_entries()
     repo = find_repository()
     files = get_files_rec(repo.worktree)
@@ -103,10 +137,13 @@ def has_uncommited_changes():
     return bool(modifies["modified"] or modifies["untracked"] or modifies["deleted"])
 
 
-def checkout(is_new_branch, args):
+def checkout(branch_name, is_new_branch=False):
+    """
+    Switch branches or restore working tree files
+    https://git-scm.com/docs/git-checkout
+    """
     repo = find_repository()
 
-    branch_name = args[0]
     branch_path = repo.worktree + "/" + GITDIR + "/refs/heads/" + branch_name
     with open(repo.build_path("HEAD"), "r+") as file:
         current_branch = file.read().split('/')[-1]
@@ -153,10 +190,16 @@ def checkout(is_new_branch, args):
 
 def cherry_pick(commit_ref):
     """
+    commit_ref: sha1 of commit | branch_name
+
     Simplified version of cherry pick command.
     We don't handle conflicts yet.
+
+    Given one commit, apply the changes that it introduces recording a new commit.
+    This requires your working tree to be clean (no modifications from the HEAD commit).
+
+    https://git-scm.com/docs/git-cherry-pick
     """
-    # commit_ref: sha1 of commit | branch_name
 
     # check if commit_sha1 is a valid sha1 chars with hashlib library
     if is_sha1(commit_ref):

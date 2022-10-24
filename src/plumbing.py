@@ -4,6 +4,7 @@ from datetime import date
 from hashlib import sha1
 from typing import List
 
+from src.algorithms import find_object, object_class, read_object
 from src.index import (IndexEntry, parse_index_entries_to_dict, read_entries,
                        write_entries)
 from src.objects.base import is_sha1
@@ -14,54 +15,12 @@ from .objects.blob import Blob
 from .objects.commit import Commit
 from .objects.tree import Tree
 
-OBJECT_CLASSES = [Blob, Commit, Tree]
-OBJECT_CHOICES = {cls.object_type: cls for cls in OBJECT_CLASSES}
-
-
-def object_class(object_type):
-    try:
-        return OBJECT_CHOICES[object_type]
-    except KeyError:
-        raise TypeError(f"Unknown type {object_type}")
-
-
-def read_object(repo, sha):
-    """ """
-    assert len(sha) == 40
-    path = repo.build_path("objects", sha[0:2], sha[2:])
-    with open(path, "rb") as file:
-        raw = zlib.decompress(file.read())
-        # Read object type
-        type_end = raw.find(b" ")
-        type_name = raw[0:type_end]
-
-        # Read and validate object size
-        header_end = raw.find(b"\0", type_end)
-        size = int(raw[type_end:header_end].decode("ascii"))
-        if size != len(raw) - header_end - 1:
-            raise Exception(f"Invalid object {sha}: bad length")
-
-        obj_class = object_class(type_name)
-        return obj_class(repo, raw[header_end + 1 :])
-
-
-def find_object(repo, ref, object_type=None) -> str:
-    """ """
-    # At the moment we only search with the complete hash
-    return ref
-
-
-def hash_object(object_type, path=None, data=None, write=True) -> str:
-    if object_type == "blob":
-        with open(path, "rb") as file:  # type: ignore
-            data = file.read()
-            hash = hash_object_data(object_type, data, write)
-            return hash
-    else:
-        return hash_object_data(object_type, data, write)
-
 
 def hash_object_data(object_type, data, write) -> str:
+    """
+    Auxiliar function to compute object ID and optionally creates a blob from a file,
+    used in hash_object command.
+    """
     repo = None
     object_type = object_type.encode("ascii")
 
@@ -82,8 +41,25 @@ def hash_object_data(object_type, data, write) -> str:
     return sha
 
 
+def hash_object(object_type, path=None, data=None, write=True) -> str:
+    """
+    Compute object ID and optionally creates a blob from a file.
+    https://git-scm.com/docs/git-hash-object
+    """
+    if object_type == "blob":
+        with open(path, "rb") as file:  # type: ignore
+            data = file.read()
+            hash = hash_object_data(object_type, data, write)
+            return hash
+    else:
+        return hash_object_data(object_type, data, write)
+
+
 def cat_file(object_type, object) -> str:
-    """ """
+    """
+    Provides the content of an object in the repository.
+    https://git-scm.com/docs/git-cat-file
+    """
     repo = find_repository()
     obj = read_object(repo, find_object(repo, object, object_type=object_type))
     res: bytes = obj.serialize()
@@ -91,6 +67,10 @@ def cat_file(object_type, object) -> str:
 
 
 def ls_tree(tree_ish) -> List:
+    """
+    List the contents of a tree object.
+    https://git-scm.com/docs/git-ls-tree
+    """
     repo = find_repository()
     object_ref = find_object(repo, tree_ish, object_type=b"tree")
     obj: Tree = read_object(repo, object_ref)
@@ -107,6 +87,7 @@ def ls_tree(tree_ish) -> List:
 def write_tree() -> str:
     """
     Create recursively a tree object from the index
+    https://git-scm.com/docs/git-write-tree
     """
     entries = read_entries()
     parsed_entries = parse_index_entries_to_dict(entries)
@@ -145,6 +126,9 @@ def write_commit(tree_sha, message, parents=[]):
 
 def hash_tree_recursive(entries: dict) -> str:
     """
+    Create a tree object from a dict of entries.
+
+    e.g. of entries:
     {
         "A": {
             "5.txt": "b729d9500ea4c046f88c4e5c084151ec2cbb6427",
@@ -244,27 +228,6 @@ def get_index_entries_rec(tree_items: List, seed_path=[]) -> List[IndexEntry]:
             path = "/".join(seed_path + [path])
             entries.append(IndexEntry(path, sha))
     return entries
-
-
-# def get_commit_changes(commit_sha):
-#     """
-#     Get the changes from a commit
-#     """
-#     repo = find_repository()
-#     commit = read_object(repo, commit_sha)
-#     current_tree_sha1 = commit.commit_data[b"tree"].decode("ascii")
-
-#     parent_commit = commit.commit_data.get(b"parent", None)
-
-#     tree = ls_tree(current_tree_sha1)
-#     differences = set(tree)
-#     if parent_commit:
-#         parent_commit_sha1 = parent_commit.decode("ascii")
-#         parent_commit = read_object(repo, parent_commit_sha1)
-#         parent_tree_sha1 = parent_commit.commit_data[b"tree"].decode("ascii")
-#         differences -= set(ls_tree(parent_tree_sha1))
-
-#     return differences
 
 
 def get_commit_changes(commit_sha):
