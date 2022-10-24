@@ -174,9 +174,10 @@ def hash_tree_recursive(entries: dict) -> str:
 
 def get_reference(ref):
     """
-    Get the branch name or HEAD, and return the commit sha
-    cases:
-        HEAD: {commit-sha-1} o 'refs/heads/main'
+    Get the commit SHA.
+
+    Args:
+        ref: HEAD or refs/heads/*
     """
     repo = find_repository()
     path = repo.build_path(*ref.split("/"))
