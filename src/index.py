@@ -40,6 +40,8 @@ def read_entries() -> List[IndexEntry]:
 
 
 def write_entries(entries: List[IndexEntry]):
+    # TODO: This is the equivalent of update-index command in git with each entry, so we
+    # need to refactor this function name to be more aligned with git.
     entries = sorted(entries, key=lambda entry: entry.path)
 
     data = b""

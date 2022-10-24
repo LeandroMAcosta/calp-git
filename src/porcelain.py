@@ -1,12 +1,9 @@
 import os
 from typing import List
 
+from src import plumbing
 from src.index import IndexEntry, read_entries, write_entries
 from src.objects.base import is_sha1
-from src.plumbing import (cat_file, get_commit_changes, get_current_commit,
-                          get_reference, hash_object, read_object,
-                          update_current_ref, update_index_entries,
-                          update_working_directory, write_commit, write_tree)
 from src.repository import GITDIR, create_repository, find_repository
 from src.utils import get_files_rec, print_status_messages
 
@@ -49,7 +46,7 @@ def add(paths: List[str]):
     for path in paths:
         # TODO: Handle directories
         if os.path.exists(path):
-            hash = hash_object("blob", path=path, write=True)
+            hash = plumbing.hash_object("blob", path=path, write=True)
             entry = IndexEntry(path, hash)
             entries.append(entry)
 
@@ -65,24 +62,24 @@ def commit(message):
 
     https://git-scm.com/docs/git-commit
     """
-    tree_sha1 = write_tree()
+    tree_sha1 = plumbing.write_tree()
 
     # TODO: Refactor and use the plumbing functions (commit-tree)
     # TODO: Check changes in the working directory
-    parent = get_reference("HEAD")
+    parent = plumbing.get_reference("HEAD")
 
     if parent:
         repo = find_repository()
-        current_commit = read_object(repo, parent)
+        current_commit = plumbing.read_object(repo, parent)
         data = current_commit.commit_data
         if data[b"tree"] == tree_sha1.encode("ascii"):
             print("Nothing to commit")
             return
-        commit_sha1 = write_commit(tree_sha1, message, [parent])
+        commit_sha1 = plumbing.write_commit(tree_sha1, message, [parent])
     else:
-        commit_sha1 = write_commit(tree_sha1, message)
+        commit_sha1 = plumbing.write_commit(tree_sha1, message)
 
-    update_current_ref(commit_sha1)
+    plumbing.update_current_ref(commit_sha1)
     return commit_sha1
 
 
@@ -104,7 +101,7 @@ def status():
     hashes = []
 
     for file in files:
-        hash = hash_object("blob", path=file, write=False)
+        hash = plumbing.hash_object("blob", path=file, write=False)
         hashes.append(hash)
         found = False
 
@@ -181,8 +178,8 @@ def checkout(branch_name, is_new_branch=False):
                 with open(repo.build_path("HEAD"), "r+") as file:
                     file.truncate(0)
                     file.write(f"ref: refs/heads/{branch_name}")
-                    update_index_entries(branch_path)
-                    update_working_directory()
+                    plumbing.update_index_entries(branch_path)
+                    plumbing.update_working_directory()
                     print(f"Switched to branch {branch_name}")
     else:
         print("Branch does not exist")
@@ -205,21 +202,21 @@ def cherry_pick(commit_ref):
     if is_sha1(commit_ref):
         commit_sha1 = commit_ref
     else:
-        commit_sha1 = get_reference(f"refs/heads/{commit_ref}")
+        commit_sha1 = plumbing.get_reference(f"refs/heads/{commit_ref}")
 
     if has_uncommited_changes():
         # TODO: print status
         raise Exception("Cannot cherry-pick with uncommited changes")
 
     repo = find_repository()
-    changes = get_commit_changes(commit_sha1)
-    current_commit = get_current_commit()
+    changes = plumbing.get_commit_changes(commit_sha1)
+    current_commit = plumbing.get_current_commit()
     for path, sha in changes:
-        commited_data = cat_file("blob", sha)
+        commited_data = plumbing.cat_file("blob", sha)
         list_path = path.split("/")
 
         is_modified_file = (
-            os.path.exists(path) and hash_object("blob", path=path, write=False) != sha
+            os.path.exists(path) and plumbing.hash_object("blob", path=path, write=False) != sha
         )
         is_new_file = not os.path.exists(path)
 
