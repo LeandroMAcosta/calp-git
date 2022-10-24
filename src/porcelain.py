@@ -1,21 +1,44 @@
 import os
 from typing import List
 
+from src import plumbing
 from src.index import IndexEntry, read_entries, write_entries
 from src.objects.base import is_sha1
-from src.plumbing import (cat_file, get_commit_changes, get_current_commit,
-                          get_reference, hash_object, read_object,
-                          update_current_ref, update_index_entries,
-                          update_working_directory, write_commit, write_tree)
 from src.repository import GITDIR, create_repository, find_repository
 from src.utils import get_files_rec, print_status_messages
 
 
 def init(path):
+    """
+    Create an empty Calp repository.
+
+    https://git-scm.com/docs/git-init
+    """
     create_repository(path)
 
 
 def add(paths: List[str]):
+    """
+    Add file contents to the index.
+
+    This command updates the index using the current content found in the working tree,
+    to prepare the content staged for the next commit. It typically adds the current content
+    of existing paths as a whole, but with some options it can also be used to add content
+    with only part of the changes made to the working tree files applied, or remove paths that
+     do not exist in the working tree anymore.
+
+    The "index" holds a snapshot of the content of the working tree, and it is this snapshot
+    that is taken as the contents of the next commit. Thus after making any changes to the
+    working tree, and before running the commit command, you must use the add command to add
+    any new or modified files to the index.
+
+    This command can be performed multiple times before a commit. It only adds the content
+    of the specified file(s) at the time the add command is run; if you want subsequent
+    changes included in the next commit, then you must run git add again to add the new
+    content to the index.
+
+    https://git-scm.com/docs/git-add
+    """
     # paths: ["A/1.txt", "2.txt"]
     # Read the entries from the staging area in the index file
     entries: List[IndexEntry] = read_entries()
@@ -28,7 +51,7 @@ def add(paths: List[str]):
     for path in paths:
         # TODO: Handle directories
         if os.path.exists(path):
-            hash = hash_object("blob", path=path, write=True)
+            hash = plumbing.hash_object("blob", path=path, write=True)
             entry = IndexEntry(path, hash)
             entries.append(entry)
 
@@ -36,31 +59,29 @@ def add(paths: List[str]):
 
 
 def commit(message):
-    tree_sha1 = write_tree()
+    """
+    Record changes to the repository.
 
-    parent = get_reference("HEAD")
+    Create a new commit containing the current contents of the index and the given log
+    message describing the changes. The new commit is a direct child of HEAD.
 
-    if parent:
-        repo = find_repository()
-        current_commit = read_object(repo, parent)
-        data = current_commit.commit_data
-        if data[b"tree"] == tree_sha1.encode("ascii"):
-            print("Nothing to commit")
-            return
-        commit_sha1 = write_commit(tree_sha1, message, [parent])
-    else:
-        commit_sha1 = write_commit(tree_sha1, message)
-
-    # HEAD apunta a un commit (sha1)
-    # - Actualizar HEAD al commit nuevo
-    # HEAD apunta a una branch (ref: refs/heads/master)
-    # - Actualizar refs/heads/master al commit nuevo
-    update_current_ref(commit_sha1)
+    https://git-scm.com/docs/git-commit
+    """
+    tree_sha1 = plumbing.write_tree()
+    commit_sha1 = plumbing.commit_tree(tree_sha1, message)
+    plumbing.update_current_ref(commit_sha1)
     return commit_sha1
 
 
 def status():
-    # Read the entries from the staging area in the index file
+    """
+    Show the working tree status.
+    Displays paths that have differences between the index file and the current HEAD commit,
+    paths that have differences between the working tree and the index file, and paths in
+    the working tree that are not tracked by Calp (our Git implementation).
+
+    https://git-scm.com/docs/git-status
+    """
     entries: List[IndexEntry] = read_entries()
     repo = find_repository()
     files = get_files_rec(repo.worktree)
@@ -70,7 +91,7 @@ def status():
     hashes = []
 
     for file in files:
-        hash = hash_object("blob", path=file, write=False)
+        hash = plumbing.hash_object("blob", path=file, write=False)
         hashes.append(hash)
         found = False
 
@@ -103,10 +124,13 @@ def has_uncommited_changes():
     return bool(modifies["modified"] or modifies["untracked"] or modifies["deleted"])
 
 
-def checkout(is_new_branch, args):
+def checkout(branch_name, is_new_branch=False):
+    """
+    Switch branches or restore working tree files
+    https://git-scm.com/docs/git-checkout
+    """
     repo = find_repository()
 
-    branch_name = args[0]
     branch_path = repo.worktree + "/" + GITDIR + "/refs/heads/" + branch_name
     with open(repo.build_path("HEAD"), "r+") as file:
         current_branch = file.read().split('/')[-1]
@@ -144,8 +168,8 @@ def checkout(is_new_branch, args):
                 with open(repo.build_path("HEAD"), "r+") as file:
                     file.truncate(0)
                     file.write(f"ref: refs/heads/{branch_name}")
-                    update_index_entries(branch_path)
-                    update_working_directory()
+                    plumbing.update_index_entries(branch_path)
+                    plumbing.update_working_directory()
                     print(f"Switched to branch {branch_name}")
     else:
         print("Branch does not exist")
@@ -153,30 +177,36 @@ def checkout(is_new_branch, args):
 
 def cherry_pick(commit_ref):
     """
+    commit_ref: sha1 of commit | branch_name
+
     Simplified version of cherry pick command.
     We don't handle conflicts yet.
+
+    Given one commit, apply the changes that it introduces recording a new commit.
+    This requires your working tree to be clean (no modifications from the HEAD commit).
+
+    https://git-scm.com/docs/git-cherry-pick
     """
-    # commit_ref: sha1 of commit | branch_name
 
     # check if commit_sha1 is a valid sha1 chars with hashlib library
     if is_sha1(commit_ref):
         commit_sha1 = commit_ref
     else:
-        commit_sha1 = get_reference(f"refs/heads/{commit_ref}")
+        commit_sha1 = plumbing.get_reference(f"refs/heads/{commit_ref}")
 
     if has_uncommited_changes():
         # TODO: print status
         raise Exception("Cannot cherry-pick with uncommited changes")
 
     repo = find_repository()
-    changes = get_commit_changes(commit_sha1)
-    current_commit = get_current_commit()
+    changes = plumbing.get_commit_changes(commit_sha1)
+    current_commit = plumbing.get_current_commit()
     for path, sha in changes:
-        commited_data = cat_file("blob", sha)
+        commited_data = plumbing.cat_file("blob", sha)
         list_path = path.split("/")
 
         is_modified_file = (
-            os.path.exists(path) and hash_object("blob", path=path, write=False) != sha
+            os.path.exists(path) and plumbing.hash_object("blob", path=path, write=False) != sha
         )
         is_new_file = not os.path.exists(path)
 

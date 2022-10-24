@@ -1,4 +1,5 @@
 import collections
+from typing import List
 
 from .base import BaseObject
 
@@ -80,3 +81,12 @@ class Commit(BaseObject):
 
     def get_message(self) -> str:
         return self.commit_data[b""].decode("ascii")
+
+    def get_tree_hash(self) -> str:
+        return self.commit_data[b"tree"].decode("ascii")
+
+    def get_parents(self) -> List[str]:
+        # TODO: We asume that our commits only have one parent
+        # because we are not implementing merge commands
+        # So the len of the return list should be 1 or 0 (if it's the first commit)
+        return [parent.decode("ascii") for parent in self.commit_data.get(b"parent", [])]
