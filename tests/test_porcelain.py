@@ -1,6 +1,9 @@
 # Test file
+import io
 import os
+import sys
 import unittest
+from contextlib import suppress
 
 from src.index import read_entries
 from src.plumbing import (get_commit_changes, get_reference, read_object,
@@ -19,6 +22,11 @@ if not os.path.exists(ABSOLUTE_PATH):
 
 
 class TestGitCommands(unittest.TestCase):
+
+    def setUp(self):
+        os.system(f"rm -rf {ABSOLUTE_PATH}/*")
+        return super().setUp()
+
     def tearDown(self):
         os.system(f"rm -rf {ABSOLUTE_PATH}/*")
         os.system(f"rm -rf {ABSOLUTE_PATH}/{GITDIR}")
@@ -250,6 +258,63 @@ class TestGitCommands(unittest.TestCase):
         self.assertTrue(changes[0][1] == "038d718da6a1ebbc6a7780a96ed75a70cc2ad6e2")
         self.assertTrue(len(changes) == 1)
 
+    def test_checkout_new_branch_ok(self):
+        # assert that tmp_path not exists
+        self.assertTrue(os.path.exists(ABSOLUTE_PATH))
+        os.chdir(ABSOLUTE_PATH)
+        # execute bash command ../calp init .
+        os.system("../../calp init")
+        os.system("echo 'main' > main.txt")
+        os.system("../../calp add main.txt")
+        os.system("../../calp commit -m 'first commit'")
+        os.system("../../calp checkout -b new_branch")
+        expected_path = (
+            f"{ABSOLUTE_PATH}/{GITDIR}/refs/heads/new_branch"
+        )
+        self.assertTrue(os.path.exists(expected_path))
+        with open(f"{ABSOLUTE_PATH}/{GITDIR}/HEAD", 'r') as file:
+            branch = file.read().split('/')[-1]
+            self.assertEqual(branch, 'new_branch')
+
+    def test_checkout_failed(self):
+        # assert that tmp_path not exists
+        self.assertTrue(os.path.exists(ABSOLUTE_PATH))
+        os.chdir(ABSOLUTE_PATH)
+        # execute bash command ../calp init .
+        os.system("../../calp init")
+        os.system("../../calp checkout fake_branch")
+        with open(f"{ABSOLUTE_PATH}/{GITDIR}/HEAD", 'r') as file:
+            branch = file.read().split('/')[-1]
+            self.assertEqual(branch, 'master')
+
+    def test_checkout_verify_index_update(self):
+        # assert that tmp_path not exists
+        self.assertTrue(os.path.exists(ABSOLUTE_PATH))
+        os.chdir(ABSOLUTE_PATH)
+        # execute bash command ../calp init .
+        os.system("../../calp init")
+        os.system("echo 'main' > main.txt")
+        correct_data = ""
+        with open(f"{ABSOLUTE_PATH}/main.txt") as file:
+            correct_data = file.read()
+        os.system("../../calp add main.txt")
+        os.system("../../calp commit -m 'first commit'")
+        os.system("../../calp checkout -b new_branch")
+        with open(f"{ABSOLUTE_PATH}/{GITDIR}/HEAD", 'r') as file:
+            branch = file.read().split('/')[-1]
+            self.assertEqual(branch, 'new_branch')
+        os.system("echo 'naim' > main.txt")
+        with open(f"{ABSOLUTE_PATH}/main.txt") as file:
+            self.assertNotEqual(correct_data, file.read())
+        os.system("../../calp add main.txt")
+        os.system("../../calp commit -m 'second commit'")
+        os.system("../../calp checkout master")
+        with open(f"{ABSOLUTE_PATH}/{GITDIR}/HEAD", 'r') as file:
+            branch = file.read().split('/')[-1]
+            self.assertEqual(branch, 'master')
+        with open(f"{ABSOLUTE_PATH}/main.txt") as file:
+            self.assertEqual(correct_data, file.read())
+
     def test_cherry_pick(self):
         self.assertTrue(os.path.exists(ABSOLUTE_PATH))
         os.chdir(ABSOLUTE_PATH)
@@ -283,7 +348,9 @@ class TestGitCommands(unittest.TestCase):
 
         os.system("echo '2' > 2.txt")        # 0cfbf08886fca9a91cb753ec8734c84fcbe52c9f
         os.system("rm 3.txt")
-        os.system("echo 'd00491fd7e5bb6fa28c517a0bb32b8b506539d4d 1.txt\n0cfbf08886fca9a91cb753ec8734c84fcbe52c9f 2.txt' > .calp/index")
+        expected_index = "echo 'd00491fd7e5bb6fa28c517a0bb32b8b506539d4d 1.txt\n"
+        expected_index += "0cfbf08886fca9a91cb753ec8734c84fcbe52c9f 2.txt' > .calp/index"
+        os.system(expected_index)
 
         os.system("../../calp cherry-pick feature")
 

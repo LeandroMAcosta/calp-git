@@ -40,7 +40,8 @@ def create_repository(path) -> Repository:
     repo.create_dir("objects")
     repo.create_dir("refs", "heads")
     repo.create_dir("refs", "tags")
-
+    
+    open(repo.build_path("refs","heads","master"),"w+").close()
     with open(repo.build_path("HEAD"), "w+") as f:
         f.write("ref: refs/heads/master")
     return repo

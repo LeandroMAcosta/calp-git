@@ -4,9 +4,11 @@ from datetime import date
 from hashlib import sha1
 from typing import List
 
-from src.index import IndexEntry, parse_index_entries_to_dict, read_entries
+from src.index import (IndexEntry, parse_index_entries_to_dict, read_entries,
+                       write_entries)
 from src.objects.base import is_sha1
 from src.repository import find_repository
+from src.utils import get_files_rec
 
 from .objects.blob import Blob
 from .objects.commit import Commit
@@ -286,3 +288,29 @@ def get_commit_changes(commit_sha):
             (index_entry.path, index_entry.hash) for index_entry in parent_entries
         }
     return differences
+
+
+def update_index_entries(branch_path):
+    with open(branch_path, "r") as f:
+        branch_commit = f.read()
+        index_entries = get_index_entries_from_commit(branch_commit)
+        write_entries(index_entries)
+
+
+def update_working_directory():
+    repo = find_repository()
+    files = get_files_rec(repo.worktree)
+    entries = read_entries()
+    new_files = [entry.path for entry in entries]
+
+    for file in files:
+        if file not in new_files:
+            os.remove(file)
+
+    for entry in entries:
+        obj = read_object(repo, entry.hash)
+        res: bytes = obj.serialize()
+        content = res.decode("ascii")
+
+        with open(entry.path, "w") as f:
+            f.write(content)

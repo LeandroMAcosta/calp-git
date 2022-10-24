@@ -3,12 +3,12 @@ from typing import List
 
 from src.index import IndexEntry, read_entries, write_entries
 from src.objects.base import is_sha1
-from src.plumbing import (cat_file, get_commit_changes,
-                          get_current_commit, get_reference, hash_object,
-                          read_object, update_current_ref, write_commit,
-                          write_tree)
+from src.plumbing import (cat_file, get_commit_changes, get_current_commit,
+                          get_reference, hash_object, read_object,
+                          update_current_ref, update_index_entries,
+                          update_working_directory, write_commit, write_tree)
 from src.repository import GITDIR, create_repository, find_repository
-from src.utils import get_files_rec
+from src.utils import get_files_rec, print_status_messages
 
 
 def init(path):
@@ -101,6 +101,54 @@ def status():
 def has_uncommited_changes():
     modifies = status()
     return bool(modifies["modified"] or modifies["untracked"] or modifies["deleted"])
+
+
+def checkout(is_new_branch, args):
+    repo = find_repository()
+
+    branch_name = args[0]
+    branch_path = repo.worktree + "/" + GITDIR + "/refs/heads/" + branch_name
+    with open(repo.build_path("HEAD"), "r+") as file:
+        current_branch = file.read().split('/')[-1]
+
+    # Move to an existing branch if it exists
+    if is_new_branch:
+        if os.path.exists(branch_path):
+            print("Branch already exists")
+            return
+
+        # Write commit sha1
+        current_branch_path = repo.worktree + "/" + GITDIR + "/refs/heads/" + current_branch
+        with open(current_branch_path, "r") as file:
+            current_branch_commit = file.read()
+            with open(branch_path, "w+") as f:
+                f.write(current_branch_commit)
+
+        # Switch to new branch
+        with open(repo.build_path("HEAD"), "w+") as file:
+            file.write(f"ref: refs/heads/{branch_name}")
+
+        print(f"Switched to branch '{branch_name}'")
+        return
+
+    if os.path.exists(branch_path):
+        STATUS = status()
+        # If there are changes, they need to be commited before
+        # changing to a branch
+        if has_uncommited_changes():
+            print_status_messages(STATUS)
+        else:
+            if current_branch == branch_name:
+                print(f"Already on branch {branch_name}")
+            else:
+                with open(repo.build_path("HEAD"), "r+") as file:
+                    file.truncate(0)
+                    file.write(f"ref: refs/heads/{branch_name}")
+                    update_index_entries(branch_path)
+                    update_working_directory()
+                    print(f"Switched to branch {branch_name}")
+    else:
+        print("Branch does not exist")
 
 
 def cherry_pick(commit_ref):

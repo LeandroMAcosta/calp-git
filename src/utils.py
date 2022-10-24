@@ -41,4 +41,4 @@ def print_status_messages(status):
             print(f"\t{FAIL}{file}{ENDC}")
     
     if len(modified) == 0 and len(deleted) == 0 and len(untracked)== 0:
-        print("nothing to commit (working directory clean)")
+        print("Nothing to commit (working directory clean)")
