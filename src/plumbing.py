@@ -5,6 +5,7 @@ from hashlib import sha1
 from typing import List
 
 from src.index import IndexEntry, parse_index_entries_to_dict, read_entries
+from src.objects.base import is_sha1
 from src.repository import find_repository
 
 from .objects.blob import Blob
@@ -52,7 +53,8 @@ def hash_object(object_type, path=None, data=None, write=True) -> str:
     if object_type == "blob":
         with open(path, "rb") as file:  # type: ignore
             data = file.read()
-            return hash_object_data(object_type, data, write)
+            hash = hash_object_data(object_type, data, write)
+            return hash
     else:
         return hash_object_data(object_type, data, write)
 
@@ -68,7 +70,6 @@ def hash_object_data(object_type, data, write) -> str:
     header = obj.object_type + b" " + str(length).encode("ascii") + b"\0"
     full_data = header + obj.serialize()
     sha: str = sha1(full_data).hexdigest()
-
     assert len(sha) == 40
 
     if write:
@@ -79,14 +80,12 @@ def hash_object_data(object_type, data, write) -> str:
     return sha
 
 
-def cat_file(object_type, object):
+def cat_file(object_type, object) -> str:
     """ """
     repo = find_repository()
     obj = read_object(repo, find_object(repo, object, object_type=object_type))
-    # for key, value in obj.de():
-    #     print(f"{key}: {value}")
     res: bytes = obj.serialize()
-    print(res.decode("ascii"))
+    return res.decode("ascii")
 
 
 def ls_tree(tree_ish) -> List:
@@ -135,6 +134,7 @@ def write_commit(tree_sha, message, parents=[]):
         + date_timezone
         + b"\n"
     )
+    assert len(message) > 0
     data += b"\n" + message.encode("ascii")
 
     commit_sha1 = hash_object("commit", data=data, write=True)
@@ -172,14 +172,15 @@ def hash_tree_recursive(entries: dict) -> str:
     return sha
 
 
-def get_commit_sha1(ref):
+def get_reference(ref):
     """
-    Get the branch name or HEAD, and return the commit sha
-    cases:
-        HEAD: {commit-sha-1} o 'ref: refs/heads/main'
+    Get the commit SHA.
+
+    Args:
+        ref: HEAD or refs/heads/*
     """
     repo = find_repository()
-    path = repo.build_path(ref)
+    path = repo.build_path(*ref.split("/"))
     if not os.path.exists(path):
         return None
 
@@ -187,9 +188,24 @@ def get_commit_sha1(ref):
         data = file.read().strip()
 
     if data.startswith("ref: "):
-        return get_commit_sha1(data[5:])
+        return get_reference(data[5:])
     else:
         return data
+
+
+def get_commit(commit_ref) -> Commit:
+    # commit_ref: sha1 of commit | branch_name
+    repo = find_repository()
+    if not is_sha1(commit_ref):
+        path = repo.build_path(["refs", "heads", commit_ref])
+        with open(path, "r") as file:
+            commit_ref = file.read().strip()
+    return read_object(repo, commit_ref)
+
+
+def get_current_commit():
+    current_commit_ref = get_reference("HEAD")
+    return get_commit(current_commit_ref)
 
 
 def update_current_ref(sha):
