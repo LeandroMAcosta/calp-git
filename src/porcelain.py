@@ -127,39 +127,18 @@ def cherry_pick(commit_ref):
         commited_data = cat_file("blob", sha)
         list_path = path.split("/")
 
-        if len(list_path) > 1:
-            # If paths not exists, create it
-            os.makedirs(os.path.join(repo.worktree, "/".join(list_path[:-1])), exist_ok=True)
+        is_modified_file = (
+            os.path.exists(path) and hash_object("blob", path=path, write=False) != sha
+        )
+        is_new_file = not os.path.exists(path)
 
-        if os.path.exists(path):
-            # Current hash of the blob in the worktree
-            current_hash = hash_object("blob", path=path, write=False)
-            if current_hash != sha:
-                with open(path, "w+") as f:
-                    # TODO: Check lowest common ancestor hash, to verify if the file has been modified
-                    # and detect merge conflicts
-                    f.write(commited_data)
-                # Add command outside of the context manager (with), because when we open the file, until the file is
-                # closed, is empty.
-                add([path])
-        else:
-            with open(path, "w") as f:
+        if is_modified_file or is_new_file:
+            # Create paths if not exists
+            os.makedirs(os.path.join(repo.worktree, "/".join(list_path[:-1])), exist_ok=True)
+            with open(path, "w+") as f:
+                # TODO: Check lowest common ancestor hash, to verify if the file has been modified
+                # betweet current commit and the lca commit, and detect merge conflicts
                 f.write(commited_data)
             add([path])
+
     commit(current_commit.get_message())
-
-    """
-    {path} {sha1}
-    for path, sha1 in differences:
-        data = cat_file(sha1)
-        list_path = path.split("/") # ["A", "B", "1.txt"]
-        repo.make_dir(list_path)
-        with open(repo.build_path(path), "wr") as f:
-            current_data = f.read()
-            # chequear lowest common ancestor entre commits
-            merged_data = merge_(current_data, data)
-            f.write(merged_data)
-        add(path)
-
-    commit()
-    """
