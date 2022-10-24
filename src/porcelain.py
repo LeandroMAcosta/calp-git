@@ -63,22 +63,7 @@ def commit(message):
     https://git-scm.com/docs/git-commit
     """
     tree_sha1 = plumbing.write_tree()
-
-    # TODO: Refactor and use the plumbing functions (commit-tree)
-    # TODO: Check changes in the working directory
-    parent = plumbing.get_reference("HEAD")
-
-    if parent:
-        repo = find_repository()
-        current_commit = plumbing.read_object(repo, parent)
-        data = current_commit.commit_data
-        if data[b"tree"] == tree_sha1.encode("ascii"):
-            print("Nothing to commit")
-            return
-        commit_sha1 = plumbing.write_commit(tree_sha1, message, [parent])
-    else:
-        commit_sha1 = plumbing.write_commit(tree_sha1, message)
-
+    commit_sha1 = plumbing.commit_tree(tree_sha1, message)
     plumbing.update_current_ref(commit_sha1)
     return commit_sha1
 

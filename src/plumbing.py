@@ -95,6 +95,31 @@ def write_tree() -> str:
     return sha
 
 
+def commit_tree(tree_sha, message):
+    """
+    Create a new commit object
+
+    A commit object may have any number of parents. With exactly one parent, it is an
+    ordinary commit. Having more than one parent makes the commit a merge between several
+    lines of history. Initial (root) commits have no parents.
+
+    https://git-scm.com/docs/git-commit-tree
+    """
+    parent = get_reference("HEAD")
+
+    if parent:
+        repo = find_repository()
+        current_commit = read_object(repo, parent)
+        data = current_commit.commit_data
+        if data[b"tree"] == tree_sha.encode("ascii"):
+            print("Nothing to commit")
+            return
+        commit_sha1 = write_commit(tree_sha, message, [parent])
+    else:
+        commit_sha1 = write_commit(tree_sha, message)
+    return commit_sha1
+
+
 def write_commit(tree_sha, message, parents=[]):
     data = b"tree " + tree_sha.encode("ascii") + b"\n"
     for parent in parents:
