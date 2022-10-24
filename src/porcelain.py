@@ -2,9 +2,11 @@ import os
 from typing import List
 
 from src.index import IndexEntry, read_entries, write_entries
-from src.plumbing import (get_commit_sha1, hash_object, read_object,
-                          update_current_ref, write_commit, write_tree,
-                          update_index_entries, update_working_directory)
+from src.objects.base import is_sha1
+from src.plumbing import (cat_file, get_commit_changes, get_current_commit,
+                          get_reference, hash_object, read_object,
+                          update_current_ref, update_index_entries,
+                          update_working_directory, write_commit, write_tree)
 from src.repository import GITDIR, create_repository, find_repository
 from src.utils import get_files_rec, print_status_messages
 
@@ -13,7 +15,7 @@ def init(path):
     create_repository(path)
 
 
-def add(paths):
+def add(paths: List[str]):
     # paths: ["A/1.txt", "2.txt"]
     # Read the entries from the staging area in the index file
     entries: List[IndexEntry] = read_entries()
@@ -36,7 +38,7 @@ def add(paths):
 def commit(message):
     tree_sha1 = write_tree()
 
-    parent = get_commit_sha1("HEAD")
+    parent = get_reference("HEAD")
 
     if parent:
         repo = find_repository()
@@ -96,6 +98,11 @@ def status():
     }
 
 
+def has_uncommited_changes():
+    modifies = status()
+    return bool(modifies["modified"] or modifies["untracked"] or modifies["deleted"])
+
+
 def checkout(is_new_branch, args):
     repo = find_repository()
 
@@ -106,15 +113,14 @@ def checkout(is_new_branch, args):
 
     # Move to an existing branch if it exists
     if is_new_branch:
-        
-        if os.path.exists(branch_path):            
+        if os.path.exists(branch_path):
             print("Branch already exists")
             return
 
         # Write commit sha1
         current_branch_path = repo.worktree + "/" + GITDIR + "/refs/heads/" + current_branch
         with open(current_branch_path, "r") as file:
-            current_branch_commit =  file.read()
+            current_branch_commit = file.read()
             with open(branch_path, "w+") as f:
                 f.write(current_branch_commit)
 
@@ -129,7 +135,7 @@ def checkout(is_new_branch, args):
         STATUS = status()
         # If there are changes, they need to be commited before
         # changing to a branch
-        if STATUS["deleted"] or STATUS["modified"] or STATUS["untracked"]:
+        if has_uncommited_changes():
             print_status_messages(STATUS)
         else:
             if current_branch == branch_name:
@@ -143,4 +149,44 @@ def checkout(is_new_branch, args):
                     print(f"Switched to branch {branch_name}")
     else:
         print("Branch does not exist")
-    return 
+
+
+def cherry_pick(commit_ref):
+    """
+    Simplified version of cherry pick command.
+    We don't handle conflicts yet.
+    """
+    # commit_ref: sha1 of commit | branch_name
+
+    # check if commit_sha1 is a valid sha1 chars with hashlib library
+    if is_sha1(commit_ref):
+        commit_sha1 = commit_ref
+    else:
+        commit_sha1 = get_reference(f"refs/heads/{commit_ref}")
+
+    if has_uncommited_changes():
+        # TODO: print status
+        raise Exception("Cannot cherry-pick with uncommited changes")
+
+    repo = find_repository()
+    changes = get_commit_changes(commit_sha1)
+    current_commit = get_current_commit()
+    for path, sha in changes:
+        commited_data = cat_file("blob", sha)
+        list_path = path.split("/")
+
+        is_modified_file = (
+            os.path.exists(path) and hash_object("blob", path=path, write=False) != sha
+        )
+        is_new_file = not os.path.exists(path)
+
+        if is_modified_file or is_new_file:
+            # Create paths if not exists
+            os.makedirs(os.path.join(repo.worktree, "/".join(list_path[:-1])), exist_ok=True)
+            with open(path, "w+") as f:
+                # TODO: Check lowest common ancestor hash, to verify if the file has been modified
+                # betweet current commit and the lca commit, and detect merge conflicts
+                f.write(commited_data)
+            add([path])
+
+    commit(current_commit.get_message())

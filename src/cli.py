@@ -27,6 +27,7 @@ class CmdStatus(Command):
         STATUS = porcelain.status()
         print_status_messages(STATUS)
 
+
 class CmdCheckout(Command):
     def run(self, args):
         parser = optparse.OptionParser()
@@ -37,15 +38,16 @@ class CmdCheckout(Command):
             help="Name of the branch.",
         )
         options, args = parser.parse_args(args)
-        
+
         if options.is_new_branch and len(args) < 1:
             print('ERROR: Flag "-b" requires value')
             return
-        
+
         if len(args) < 1:
             porcelain.status()
         else:
             porcelain.checkout(options.is_new_branch, args)
+
 
 class CmdAdd(Command):
     def run(self, args):
@@ -126,8 +128,16 @@ class CmdCatFile(Command):
         )
         parser.add_argument("object", help="The object to display")
         args = parser.parse_args(args)
-        res = plumbing.cat_file(args.type, args.object)
-        print(res.decode("ascii"))
+        data = plumbing.cat_file(args.type, args.object)
+        print(data)
+
+
+class CmdCherryPick(Command):
+    def run(self, args):
+        parser = argparse.ArgumentParser()
+        parser.add_argument("commit_ref", help="The commit to cherry-pick")
+        args = parser.parse_args(args)
+        porcelain.cherry_pick(args.commit_ref)
 
 
 commands = {
@@ -140,4 +150,5 @@ commands = {
     "hash-object": CmdHashObject,
     "cat-file": CmdCatFile,
     "ls-tree": CmdLsTree,
+    "cherry-pick": CmdCherryPick,
 }

@@ -77,3 +77,6 @@ class Commit(BaseObject):
         else:
             commit_data[key] = value
         return self.parse_commit(raw, start=end + 1, commit_data=commit_data)
+
+    def get_message(self) -> str:
+        return self.commit_data[b""].decode("ascii")
