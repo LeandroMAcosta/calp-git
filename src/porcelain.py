@@ -243,4 +243,5 @@ def rebase(commit_ref):
     ancestors = ancestors_until_lca(current_commit, commit_sha)
 
     for ancestor_hash in ancestors:
+
         cherry_pick(ancestor_hash)

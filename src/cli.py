@@ -141,7 +141,15 @@ class CmdCherryPick(Command):
         porcelain.cherry_pick(args.commit_ref)
 
 
+class CmdRebase(Command):
+    def run(self, args):
+        parser = argparse.ArgumentParser()
+        parser.add_argument("commit_ref", help="The commit to rebase from")
+        args = parser.parse_args(args)
+        porcelain.rebase(args.commit_ref)
+
 commands = {
+    "rebase": CmdRebase,
     "checkout": CmdCheckout,
     "init": CmdInit,
     "status": CmdStatus,

@@ -49,27 +49,25 @@ def get_ancestors(repo, commit: Commit) -> Set[Commit]:
     parents = commit.get_parents()  # sha 1 parents
     for parent in parents:
         parent_commit = read_object(repo, parent)
-        ancestors.add(parent_commit)
+        ancestors.add(parent)
         ancestors.update(get_ancestors(repo, parent_commit))
 
     return ancestors
 
 
-def ancestors_until_lca(commit1_ish, commit2_ish) -> List[Commit]:
+def ancestors_until_lca(commit1_ish, commit2_ish) -> List[str]:
     repo: Repository = find_repository()
     commit1: Commit = read_object(repo, commit1_ish)
 
     ancestors1 = get_ancestors(repo, commit1)
-
     commit2: Commit = read_object(repo, commit2_ish)
-    parent = commit2
+    parent_hash = commit2_ish
     ancestors_until_lca = [commit2_ish]
-    while parent not in ancestors1:
+    while parent_hash not in ancestors1:
         # We asume that only has 1 parent
         # Check get_parents doc.
-        parent_hash = commit2.get_parents()[0]
+        parent_hash = read_object(repo,parent_hash).get_parents()[0]
         ancestors_until_lca.append(parent_hash)
-        parent = read_object(repo, commit2.get_parents()[0])
 
     ancestors_until_lca.reverse()
     return ancestors_until_lca
