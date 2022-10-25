@@ -4,12 +4,11 @@ from datetime import date
 from hashlib import sha1
 from typing import List
 
-from src.algorithms import find_object, object_class, read_object
+from src.algorithms import find_object, object_class, read_object, get_files_rec
 from src.index import (IndexEntry, parse_index_entries_to_dict, read_entries,
                        write_entries)
 from src.objects.base import is_sha1
 from src.repository import find_repository
-from src.utils import get_files_rec
 
 from .objects.blob import Blob
 from .objects.commit import Commit

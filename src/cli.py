@@ -27,7 +27,6 @@ class CmdStatus(Command):
         STATUS = porcelain.status()
         print_status_messages(STATUS)
 
-
 class CmdCheckout(Command):
     def run(self, args):
         parser = optparse.OptionParser()
@@ -60,10 +59,7 @@ class CmdAdd(Command):
 
 class CmdLog(Command):
     def run(self, args):
-        repo = find_repository()
-        print(repo.worktree)
-        print(repo.gitdir)
-        # TODO: Implement
+        log = porcelain.log()
 
 
 class CmdCommit(Command):
@@ -149,6 +145,7 @@ class CmdRebase(Command):
         porcelain.rebase(args.commit_ref)
 
 commands = {
+    "log": CmdLog,
     "rebase": CmdRebase,
     "checkout": CmdCheckout,
     "init": CmdInit,

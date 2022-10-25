@@ -2,11 +2,13 @@ import os
 from typing import List
 
 from src import plumbing
-from src.algorithms import ancestors_until_lca
+from src.colors import color_text
+from src.algorithms import ancestors_until_lca, get_ancestors, get_files_rec, read_object
 from src.index import IndexEntry, read_entries, write_entries
 from src.objects.base import is_sha1
+from src.objects.commit import Commit
 from src.repository import GITDIR, create_repository, find_repository
-from src.utils import get_files_rec, print_status_messages
+from src.utils import print_status_messages
 
 
 def init(path):
@@ -265,3 +267,33 @@ def rebase(commit_ref):
         last_commit = cherry_pick(ancestor_hash)
     # Update HEAD with last_commit
     plumbing.update_reference(current_branch, last_commit)
+
+def log():
+    """
+    List commits that are reachable by following 
+    the parent links from the given commit(s)
+    https://git-scm.com/docs/git-log
+    """
+
+    repo = find_repository()
+
+    head_commit = plumbing.get_reference("HEAD")
+
+    with open(repo.build_path("HEAD"), "r+") as file:
+        head = file.read().split('/')[-1]
+    
+    branches = get_files_rec(repo.gitdir+"/refs/heads")
+
+    head_commit_object: Commit = read_object(repo, head_commit)
+
+    ancestors = get_ancestors(repo, head_commit_object)
+
+    #Print head commit
+    print(color_text("YELLOW",head_commit[:8]) + color_text("YELLOW"," (")+
+        color_text("CYAN","HEAD ->") + color_text("GREEN"," "+head)+
+        color_text("YELLOW",") ") + head_commit_object.get_message()
+    )
+
+    for ancestor in ancestors:
+        ancestor_commit_obj: Commit = read_object(repo, ancestor)
+        print(color_text("YELLOW",ancestor[:8]) + " " + ancestor_commit_obj.get_message())

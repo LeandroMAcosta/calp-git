@@ -1,18 +1,5 @@
-import os
 from src.repository import GITDIR
-
-
-def get_files_rec(directory):
-    files = []
-    for path in os.scandir(directory):
-        if not path.name.startswith(GITDIR):
-            if path.is_file():
-                files.append(os.path.join(directory, path))
-            else:
-                get_files_rec(os.path.join(directory, path))
-
-    return files
-
+from src.colors import color_text
 
 def print_status_messages(status):
     modified = status["modified"]
@@ -29,12 +16,12 @@ def print_status_messages(status):
             f"(use '{GITDIR[1:]} restore <file>...' to discard changes in working directory)"
         )
         for file in modified:
-            print(f"\t{FAIL}modified: {file}{ENDC}")
+            print(color_text("RED","\tmodified: "+file))
 
     if len(deleted):
         print("\nDeleted files:")
         for file in deleted:
-            print(f"\t{FAIL}{file}{ENDC}")
+            print(color_text("RED","\t"+file))
 
     if len(untracked):
         print(
@@ -42,7 +29,7 @@ def print_status_messages(status):
             f"(use '{GITDIR[1:]} add <file>...' to include in what will be committed)"
         )
         for file in untracked:
-            print(f"\t{FAIL}{file}{ENDC}")
+            print(color_text("RED","\t"+file))
 
     if len(modified) == 0 and len(deleted) == 0 and len(untracked) == 0:
         print("Nothing to commit (working directory clean)")

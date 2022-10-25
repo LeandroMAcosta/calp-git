@@ -1,6 +1,8 @@
 import zlib
+import os
 from typing import List, Set
 
+from src.repository import GITDIR
 from src.objects.blob import Blob
 from src.objects.commit import Commit
 from src.objects.tree import Tree
@@ -43,14 +45,14 @@ def find_object(repo, ref, object_type=None) -> str:
     return ref
 
 
-def get_ancestors(repo, commit: Commit) -> Set[Commit]:
+def get_ancestors(repo, commit: Commit) -> List[Commit]:
     """"""
-    ancestors = set()
+    ancestors = []
     parents = commit.get_parents()  # sha 1 parents
     for parent in parents:
         parent_commit = read_object(repo, parent)
-        ancestors.add(parent)
-        ancestors.update(get_ancestors(repo, parent_commit))
+        ancestors.append(parent)
+        ancestors.extend(get_ancestors(repo, parent_commit))
 
     return ancestors
 
@@ -59,7 +61,7 @@ def ancestors_until_lca(commit1_ish, commit2_ish) -> List[str]:
     repo: Repository = find_repository()
     commit1: Commit = read_object(repo, commit1_ish)
 
-    ancestors1 = get_ancestors(repo, commit1)
+    ancestors1 = set(get_ancestors(repo, commit1))
     commit2: Commit = read_object(repo, commit2_ish)
     parent_hash = commit2_ish
     ancestors_until_lca = [commit2_ish]
@@ -71,3 +73,14 @@ def ancestors_until_lca(commit1_ish, commit2_ish) -> List[str]:
 
     ancestors_until_lca.reverse()
     return ancestors_until_lca
+
+def get_files_rec(directory):
+    files = []
+    for path in os.scandir(directory):
+        if not path.name.startswith(GITDIR):
+            if path.is_file():
+                files.append(os.path.join(directory, path))
+            else:
+                files.extend(get_files_rec(os.path.join(directory, path)))
+
+    return files
