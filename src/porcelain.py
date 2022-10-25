@@ -71,6 +71,8 @@ def commit(message):
     tree_sha1 = plumbing.write_tree()
     commit_sha1 = plumbing.commit_tree(tree_sha1, message)
     plumbing.update_current_ref(commit_sha1)
+    # TODO: borrar
+    print(f"Committed {commit_sha1}\n {message}\n")
     return commit_sha1
 
 
@@ -200,8 +202,9 @@ def cherry_pick(commit_ref):
         raise Exception("Cannot cherry-pick with uncommited changes")
 
     repo = find_repository()
+    commit_to_cherry_pick = plumbing.get_commit(commit_sha1)
+
     changes = plumbing.get_commit_changes(commit_sha1)
-    current_commit = plumbing.get_current_commit()
     for path, sha in changes:
         commited_data = plumbing.cat_file("blob", sha)
         list_path = path.split("/")
@@ -220,7 +223,7 @@ def cherry_pick(commit_ref):
                 f.write(commited_data)
             add([path])
 
-    commit(current_commit.get_message())
+    commit(commit_to_cherry_pick.get_message())
 
 
 def rebase(commit_ref):
@@ -242,6 +245,5 @@ def rebase(commit_ref):
     current_commit = plumbing.get_reference("HEAD")
     ancestors = ancestors_until_lca(current_commit, commit_sha)
 
-    for ancestor_hash in ancestors:
-
+    for ancestor_hash in ancestors[1:]:
         cherry_pick(ancestor_hash)

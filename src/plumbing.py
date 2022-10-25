@@ -113,7 +113,7 @@ def commit_tree(tree_sha, message):
         data = current_commit.commit_data
         if data[b"tree"] == tree_sha.encode("ascii"):
             print("Nothing to commit")
-            return
+            raise SystemExit(1)
         commit_sha1 = write_commit(tree_sha, message, [parent])
     else:
         commit_sha1 = write_commit(tree_sha, message)
@@ -220,6 +220,7 @@ def get_current_commit():
 
 
 def update_current_ref(sha):
+    assert sha is not None and is_sha1(sha)
     repo = find_repository()
     with open(repo.build_path("HEAD"), "r") as file:
         head_data = file.read().strip()
