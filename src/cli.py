@@ -145,7 +145,6 @@ class CmdRebase(Command):
         porcelain.rebase(args.commit_ref)
 
 commands = {
-    "log": CmdLog,
     "rebase": CmdRebase,
     "checkout": CmdCheckout,
     "init": CmdInit,
