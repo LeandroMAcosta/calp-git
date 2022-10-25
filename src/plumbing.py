@@ -183,6 +183,19 @@ def hash_tree_recursive(entries: dict) -> str:
     return sha
 
 
+def read_file(path):
+    repo = find_repository()
+    with open(repo.build_path(path), "r") as file:
+        return file.read()
+
+
+def get_current_branch() -> str:
+    # TODO: handle when HEAD is pointing to an specific
+    # commit sha1
+    head_ref = read_file("HEAD")    # ref: /refs/heads/master
+    return head_ref.split("/")[-1]  # /refs/heads/master
+
+
 def get_reference(ref):
     """
     Get the commit SHA.
@@ -232,6 +245,13 @@ def update_current_ref(sha):
     else:
         with open(repo.build_path("HEAD"), "w") as file:
             file.write(sha)
+
+
+def update_reference(branch_name, commit_sha):
+    reference = f"refs/heads/{branch_name}"
+    repo = find_repository()
+    with open(repo.build_path(reference), "w") as file:
+        file.write(commit_sha)
 
 
 def get_index_entries_from_commit(commit_sha) -> List[IndexEntry]:

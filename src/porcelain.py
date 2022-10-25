@@ -223,7 +223,7 @@ def cherry_pick(commit_ref):
                 f.write(commited_data)
             add([path])
 
-    commit(commit_to_cherry_pick.get_message())
+    return commit(commit_to_cherry_pick.get_message())
 
 
 def rebase(commit_ref):
@@ -237,13 +237,31 @@ def rebase(commit_ref):
     https://git-scm.com/docs/git-rebase
     """
 
+    """
+    git checkout commit_ref
+
+    """
+
     if is_sha1(commit_ref):
         commit_sha = commit_ref
     else:
         commit_sha = plumbing.get_reference(f"refs/heads/{commit_ref}")
 
+    current_branch = plumbing.get_current_branch()
     current_commit = plumbing.get_reference("HEAD")
-    ancestors = ancestors_until_lca(current_commit, commit_sha)
 
-    for ancestor_hash in ancestors[1:]:
-        cherry_pick(ancestor_hash)
+    # current: master
+    # commit_ref: feature
+    ancestors = ancestors_until_lca(commit_sha, current_commit)[1:]
+
+    # TODO: Check case if there aren't ancestors
+    if not ancestors:
+        print("Cannot rebase a branch onto itself")
+        return
+
+    checkout(commit_ref)
+    last_commit = None
+    for ancestor_hash in ancestors:
+        last_commit = cherry_pick(ancestor_hash)
+    # Update HEAD with last_commit
+    plumbing.update_reference(current_branch, last_commit)
