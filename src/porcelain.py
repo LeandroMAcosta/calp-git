@@ -2,6 +2,7 @@ import os
 from typing import List
 
 from src import plumbing
+from src.algorithms import ancestors_until_lca
 from src.index import IndexEntry, read_entries, write_entries
 from src.objects.base import is_sha1
 from src.repository import GITDIR, create_repository, find_repository
@@ -220,3 +221,26 @@ def cherry_pick(commit_ref):
             add([path])
 
     commit(current_commit.get_message())
+
+
+def rebase(commit_ref):
+    """
+    commit_ref: sha1 of commit | branch_name
+
+    Simplified version of rebase command.
+    We don't handle conflicts yet.
+
+    Reapply commits on top of another base tip.
+    https://git-scm.com/docs/git-rebase
+    """
+
+    if is_sha1(commit_ref):
+        commit_sha = commit_ref
+    else:
+        commit_sha = plumbing.get_reference(f"refs/heads/{commit_ref}")
+
+    current_commit = plumbing.get_reference("HEAD")
+    ancestors = ancestors_until_lca(current_commit, commit_sha)
+
+    for ancestor_hash in ancestors:
+        cherry_pick(ancestor_hash)

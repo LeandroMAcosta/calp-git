@@ -1,4 +1,5 @@
 import zlib
+from typing import List, Set
 
 from src.objects.blob import Blob
 from src.objects.commit import Commit
@@ -42,8 +43,8 @@ def find_object(repo, ref, object_type=None) -> str:
     return ref
 
 
-def get_ancestors(repo, commit: Commit):
-    """ """
+def get_ancestors(repo, commit: Commit) -> Set[Commit]:
+    """"""
     ancestors = set()
     parents = commit.get_parents()  # sha 1 parents
     for parent in parents:
@@ -54,16 +55,21 @@ def get_ancestors(repo, commit: Commit):
     return ancestors
 
 
-def lca_commit(commit1_ish, commit2_ish):
-    """ """
+def ancestors_until_lca(commit1_ish, commit2_ish) -> List[Commit]:
     repo: Repository = find_repository()
     commit1: Commit = read_object(repo, commit1_ish)
+
     ancestors1 = get_ancestors(repo, commit1)
 
     commit2: Commit = read_object(repo, commit2_ish)
-    while commit2 not in ancestors1:
+    parent = commit2
+    ancestors_until_lca = [commit2_ish]
+    while parent not in ancestors1:
         # We asume that only has 1 parent
         # Check get_parents doc.
-        commit2 = read_object(repo, commit2.get_parents()[0])
+        parent_hash = commit2.get_parents()[0]
+        ancestors_until_lca.append(parent_hash)
+        parent = read_object(repo, commit2.get_parents()[0])
 
-    return commit2
+    ancestors_until_lca.reverse()
+    return ancestors_until_lca
