@@ -18,6 +18,7 @@ def object_class(object_type):
         raise TypeError(f"Unknown type {object_type}")
 
 
+
 def read_object(repo: Repository, sha):
     """ """
     assert len(sha) == 40
