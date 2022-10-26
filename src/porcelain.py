@@ -198,10 +198,11 @@ def cherry_pick(commit_ref):
     if is_sha1(commit_ref):
         commit_sha1 = commit_ref
     else:
+        # Is a branch name. e.g. feature_branch,
+        # we need to get the commit sha1 from refs/heads/feature_branch file.
         commit_sha1 = plumbing.get_reference(f"refs/heads/{commit_ref}")
 
     if has_uncommited_changes():
-        # TODO: print status
         raise Exception("Cannot cherry-pick with uncommited changes")
 
     repo = find_repository()
