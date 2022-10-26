@@ -1,12 +1,11 @@
-import zlib
 import os
+import zlib
 from typing import List, Set
 
-from src.repository import GITDIR
 from src.objects.blob import Blob
 from src.objects.commit import Commit
 from src.objects.tree import Tree
-from src.repository import Repository, find_repository
+from src.repository import GITDIR, Repository, find_repository
 
 OBJECT_CLASSES = [Blob, Commit, Tree]
 OBJECT_CHOICES = {cls.object_type: cls for cls in OBJECT_CLASSES}
@@ -45,7 +44,7 @@ def find_object(repo, ref, object_type=None) -> str:
     return ref
 
 
-def get_ancestors(repo, commit: Commit) -> List[Commit]:
+def get_ancestors(repo, commit: Commit) -> List[str]:
     """"""
     ancestors = []
     parents = commit.get_parents()  # sha 1 parents
@@ -68,11 +67,12 @@ def ancestors_until_lca(commit1_ish, commit2_ish) -> List[str]:
     while parent_hash not in ancestors1:
         # We asume that only has 1 parent
         # Check get_parents doc.
-        parent_hash = read_object(repo,parent_hash).get_parents()[0]
+        parent_hash = read_object(repo, parent_hash).get_parents()[0]
         ancestors_until_lca.append(parent_hash)
 
     ancestors_until_lca.reverse()
     return ancestors_until_lca
+
 
 def get_files_rec(directory):
     files = []

@@ -4,7 +4,8 @@ from datetime import date
 from hashlib import sha1
 from typing import List
 
-from src.algorithms import find_object, object_class, read_object, get_files_rec
+from src.algorithms import (find_object, get_files_rec, object_class,
+                            read_object)
 from src.index import (IndexEntry, parse_index_entries_to_dict, read_entries,
                        write_entries)
 from src.objects.base import is_sha1
@@ -119,6 +120,10 @@ def commit_tree(tree_sha, message):
     return commit_sha1
 
 
+def update_index(entries: List[IndexEntry]):
+    write_entries(entries)
+
+
 def write_commit(tree_sha, message, parents=[]):
     data = b"tree " + tree_sha.encode("ascii") + b"\n"
     for parent in parents:
@@ -195,7 +200,7 @@ def get_current_branch() -> str:
     return head_ref.split("/")[-1]  # /refs/heads/master
 
 
-def get_reference(ref):
+def get_reference(ref) -> str:
     """
     Get the commit SHA.
 
@@ -205,7 +210,7 @@ def get_reference(ref):
     repo = find_repository()
     path = repo.build_path(*ref.split("/"))
     if not os.path.exists(path):
-        return None
+        return None  # type: ignore
 
     with open(repo.build_path(ref), "r") as file:
         data = file.read().strip()
@@ -302,7 +307,7 @@ def update_index_entries(branch_path):
     with open(branch_path, "r") as f:
         branch_commit = f.read()
         index_entries = get_index_entries_from_commit(branch_commit)
-        write_entries(index_entries)
+        update_index(index_entries)
 
 
 def update_working_directory():
