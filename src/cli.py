@@ -1,5 +1,6 @@
 import argparse
 import optparse
+import time
 
 from src.repository import find_repository
 from src.utils import print_status_messages
@@ -24,6 +25,26 @@ class CmdInit(Command):
 
 class CmdStatus(Command):
     def run(self, args):
+        parser = optparse.OptionParser()
+        parser.add_option(
+            "-w",
+            dest="watch",
+            action="store_true",
+            help="Name of the branch.",
+        )
+        options, args = parser.parse_args(args)
+
+        if options.watch and len(args) > 0:
+            print('ERROR: Flag "-w" does not require value')
+            return
+
+        if options.watch:
+            while True:
+                STATUS = porcelain.status()
+                print_status_messages(STATUS)
+                time.sleep(2)
+                print("\033c", end="")
+
         STATUS = porcelain.status()
         print_status_messages(STATUS)
 
@@ -60,7 +81,25 @@ class CmdAdd(Command):
 
 class CmdLog(Command):
     def run(self, args):
-        log = porcelain.log()
+        parser = optparse.OptionParser()
+        parser.add_option(
+            "-w",
+            dest="watch",
+            action="store_true",
+            help="Name of the branch.",
+        )
+        options, args = parser.parse_args(args)
+
+        if options.watch and len(args) > 0:
+            print('ERROR: Flag "-w" does not require value')
+            return
+
+        if options.watch:
+            while True:
+                porcelain.log()
+                time.sleep(2)
+                print("\033c", end="")
+        porcelain.log()
 
 
 class CmdCommit(Command):

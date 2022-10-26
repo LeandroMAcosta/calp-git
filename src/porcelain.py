@@ -87,8 +87,8 @@ def status():
 
     https://git-scm.com/docs/git-status
     """
-    entries: List[IndexEntry] = read_entries()
     repo = find_repository()
+    entries: List[IndexEntry] = read_entries()
     files = get_files_rec(repo.worktree)
     modified = []
     untracked = []
@@ -277,6 +277,11 @@ def log():
 
     with open(repo.build_path("HEAD"), "r+") as file:
         head = file.read().split('/')[-1]
+
+    # is objects folder empty
+    if head_commit is None:
+        print("No commits yet")
+        return
 
     head_commit_object: Commit = read_object(repo, head_commit)
 
