@@ -27,6 +27,7 @@ class CmdStatus(Command):
         STATUS = porcelain.status()
         print_status_messages(STATUS)
 
+
 class CmdCheckout(Command):
     def run(self, args):
         parser = optparse.OptionParser()
@@ -68,7 +69,8 @@ class CmdCommit(Command):
         parser = argparse.ArgumentParser()
         parser.add_argument("-m", "--message", required=True)
         args = parser.parse_args(args)
-        porcelain.commit(args.message)
+        sha1 = porcelain.commit(args.message)
+        print(sha1)
 
 
 class CmdLsTree(Command):
@@ -142,7 +144,9 @@ class CmdRebase(Command):
         parser = argparse.ArgumentParser()
         parser.add_argument("commit_ref", help="The commit to rebase from")
         args = parser.parse_args(args)
-        porcelain.rebase(args.commit_ref)
+        sha1 = porcelain.rebase(args.commit_ref)
+        print(sha1)
+
 
 commands = {
     "rebase": CmdRebase,

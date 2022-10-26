@@ -74,8 +74,6 @@ def commit(message):
     tree_sha1 = plumbing.write_tree()
     commit_sha1 = plumbing.commit_tree(tree_sha1, message)
     plumbing.update_current_ref(commit_sha1)
-    # TODO: borrar
-    print(f"Committed {commit_sha1}\n {message}\n")
     return commit_sha1
 
 
@@ -241,24 +239,16 @@ def rebase(commit_ref):
     https://git-scm.com/docs/git-rebase
     """
 
-    """
-    git checkout commit_ref
-
-    """
-
     if is_sha1(commit_ref):
         commit_sha = commit_ref
     else:
         commit_sha = plumbing.get_reference(f"refs/heads/{commit_ref}")
 
-    current_branch = plumbing.get_current_branch()
+    head_branch = plumbing.get_current_branch()
     current_commit = plumbing.get_reference("HEAD")
 
-    # current: master
-    # commit_ref: feature
     ancestors = ancestors_until_lca(commit_sha, current_commit)[1:]
 
-    # TODO: Check case if there aren't ancestors
     if not ancestors:
         print("Cannot rebase a branch onto itself")
         return
@@ -267,8 +257,10 @@ def rebase(commit_ref):
     last_commit = None
     for ancestor_hash in ancestors:
         last_commit = cherry_pick(ancestor_hash)
+
     # Update HEAD with last_commit
-    plumbing.update_reference(current_branch, last_commit)
+    plumbing.update_reference(head_branch, last_commit)
+    return last_commit
 
 
 def log():
