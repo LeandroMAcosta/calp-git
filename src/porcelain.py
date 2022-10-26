@@ -205,7 +205,7 @@ def cherry_pick(commit_ref):
         raise Exception("Cannot cherry-pick with uncommited changes")
 
     repo = find_repository()
-    commit_to_cherry_pick = plumbing.get_commit(commit_sha1)
+    commit_to_cherry_pick = plumbing.get_commit(commit_sha1)  # sixth commit
 
     changes = plumbing.get_commit_changes(commit_sha1)
     for path, sha in changes:
@@ -245,8 +245,9 @@ def rebase(commit_ref):
     else:
         commit_sha = plumbing.get_reference(f"refs/heads/{commit_ref}")
 
-    head_branch = plumbing.get_current_branch()
-    current_commit = plumbing.get_reference("HEAD")
+    # TODO: change this if HEAD is not a branch
+    head_branch = plumbing.get_current_branch()  # master
+    current_commit = plumbing.get_reference("HEAD")  # commit de master
 
     ancestors = ancestors_until_lca(commit_sha, current_commit)[1:]
 
@@ -254,7 +255,11 @@ def rebase(commit_ref):
         print("Cannot rebase a branch onto itself")
         return
 
-    checkout(commit_ref)
+    # checkout(commit_ref)
+    repo = find_repository()
+    with open(repo.build_path("HEAD"), "w+") as file:
+        file.write("ref: refs/heads/" + head_branch)
+
     last_commit = None
     for ancestor_hash in ancestors:
         last_commit = cherry_pick(ancestor_hash)
