@@ -197,11 +197,11 @@ def get_current_branch() -> str:
     # TODO: handle when HEAD is pointing to an specific
     # commit sha1
     head_ref = read_file("HEAD")    # ref: /refs/heads/master
-    return head_ref.split("/")[-1]  # /refs/heads/master
+    return head_ref.split("/")[-1].strip()  # /refs/heads/master
 
 
 def get_reference(ref) -> str:
-    """
+    """image.png
     Get the commit SHA.
 
     Args:
@@ -236,25 +236,35 @@ def get_current_commit():
     return get_commit(current_commit_ref)
 
 
-def update_current_ref(sha):
-    assert sha is not None and is_sha1(sha)
+def update_current_ref(commit_sha):
+    assert commit_sha is not None and is_sha1(commit_sha)
     repo = find_repository()
     with open(repo.build_path("HEAD"), "r") as file:
         head_data = file.read().strip()
 
     if head_data.startswith("ref: "):
-        ref = head_data[5:]
-        with open(repo.build_path(ref), "w") as file:
-            file.write(sha)
+        reference = head_data[5:]
+        with open(repo.build_path(reference), "w") as file:
+            print(f"Reference {reference} updated to {commit_sha}")
+            file.write(commit_sha)
     else:
         with open(repo.build_path("HEAD"), "w") as file:
-            file.write(sha)
+            file.write(commit_sha)
 
 
-def update_reference(branch_name, commit_sha):
-    reference = f"refs/heads/{branch_name}"
+def update_ref(reference, commit_sha):
+    assert commit_sha is not None and is_sha1(commit_sha)
+    """
+    Update the object name stored in a ref safely.
+
+    https://git-scm.com/docs/git-update-ref
+    """
+    if reference != "HEAD":
+        reference = f"refs/heads/{reference}"
+
     repo = find_repository()
     with open(repo.build_path(reference), "w") as file:
+        print(f"Reference {reference} updated to {commit_sha}")
         file.write(commit_sha)
 
 

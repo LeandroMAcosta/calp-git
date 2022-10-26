@@ -73,7 +73,8 @@ def commit(message):
     """
     tree_sha1 = plumbing.write_tree()
     commit_sha1 = plumbing.commit_tree(tree_sha1, message)
-    plumbing.update_current_ref(commit_sha1)
+    current_branch = plumbing.get_current_branch()
+    plumbing.update_ref(current_branch, commit_sha1)
     return commit_sha1
 
 
@@ -259,7 +260,7 @@ def rebase(commit_ref):
         last_commit = cherry_pick(ancestor_hash)
 
     # Update HEAD with last_commit
-    plumbing.update_reference(head_branch, last_commit)
+    plumbing.update_ref(head_branch, last_commit)
     return last_commit
 
 
