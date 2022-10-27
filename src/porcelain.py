@@ -255,10 +255,9 @@ def rebase(commit_ref):
         print("Cannot rebase a branch onto itself")
         return
 
-    # checkout(commit_ref)
     repo = find_repository()
-    with open(repo.build_path("HEAD"), "w+") as file:
-        file.write("ref: refs/heads/" + head_branch)
+    with open(repo.build_path(f"refs/heads/{head_branch}"), "w+") as file:
+        file.write(commit_sha)
 
     last_commit = None
     for ancestor_hash in ancestors:
